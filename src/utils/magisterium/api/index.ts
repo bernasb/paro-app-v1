@@ -1,0 +1,2 @@
+
+export { sendViaDirectClient } from './magisteriumClient';

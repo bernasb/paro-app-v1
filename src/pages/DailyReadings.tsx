@@ -1,0 +1,256 @@
+// DailyReadings.tsx
+
+import { useState, useEffect, useCallback } from "react"; // Added useCallback
+import { ReadingCard } from "@/components/liturgical/ReadingCard";
+import { getDailyMassReadings, getReadingSummary } from '@/services/liturgical/liturgicalService';
+import { saveSummaryToCache } from '@/services/liturgical/readingSummariesCache';
+import { LiturgicalReading } from "@/types/liturgical";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// Removed Firebase httpsCallable imports
+// import { getFunctions, httpsCallable, HttpsCallableResult } from 'firebase/functions';
+// import app from '@/integrations/firebase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Book, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
+
+// Helper function to generate date string
+const getDateString = (date: Date): string => {
+  return format(date, 'yyyy-MM-dd');
+};
+
+const DailyReadings = () => {
+  const { toast } = useToast();
+  const [readings, setReadings] = useState<LiturgicalReading[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // Define the fetch function using useCallback to memoize it
+  const fetchReadings = useCallback(async (date: Date) => {
+    setLoading(true);
+    setError(null);
+    console.log(`Fetching readings for ${getDateString(date)}`);
+    try {
+      // Fetch initial readings (already includes loading state for summaries)
+      const fetchedReadings = await getDailyMassReadings(date);
+      console.log(`Fetched ${fetchedReadings.length} initial readings.`);
+      
+      // Log each reading for debugging
+      console.log("Readings received from API:");
+      fetchedReadings.forEach((reading, index) => {
+        console.log(`Reading ${index + 1}: "${reading.title}" (${reading.citation})`);
+      });
+      setReadings(fetchedReadings);
+      setLoading(false); // Set loading false after initial fetch
+
+      // Asynchronously fetch summaries in parallel for faster loading
+      console.log("Starting parallel summary fetching...");
+      
+      // First, mark Gospel Acclamation readings as not needing summaries
+      const readingsToUpdate = [...fetchedReadings];
+      fetchedReadings.forEach((reading, index) => {
+        if (reading.title.toLowerCase().includes('gospel acclamation')) {
+          readingsToUpdate[index] = {
+            ...reading,
+            summaryLoading: false
+          };
+        }
+      });
+      setReadings(readingsToUpdate);
+      
+      // Create an array of promises for all summaries that need to be fetched
+      const summaryPromises = fetchedReadings
+        .filter(reading => !reading.title.toLowerCase().includes('gospel acclamation'))
+        .map(async (reading) => {
+          try {
+            console.log(`Requesting summary for: ${reading.title}`);
+            // Fetch summary and detailed explanation
+            const summaryResult = await getReadingSummary({
+              title: reading.title,
+              citation: reading.citation
+            });
+            
+            console.log(`Summary received for: ${reading.title}`);
+            
+            // Update this reading with its summary and detailed explanation
+            setReadings(prevReadings => {
+              const updatedReadings = [...prevReadings];
+              const index = updatedReadings.findIndex(r => 
+                r.title === reading.title && r.citation === reading.citation);
+              
+              if (index !== -1) {
+                updatedReadings[index] = {
+                  ...updatedReadings[index],
+                  summary: summaryResult.summary,
+                  detailedExplanation: summaryResult.detailedExplanation,
+                  summaryLoading: false,
+                  summaryError: undefined
+                };
+              }
+              return updatedReadings;
+            });
+            
+            return { title: reading.title, success: true };
+          } catch (summaryError: any) {
+            console.error(`Error fetching summary for ${reading.title}:`, summaryError);
+            
+            // Update this reading with error state
+            setReadings(prevReadings => {
+              const updatedReadings = [...prevReadings];
+              const index = updatedReadings.findIndex(r => 
+                r.title === reading.title && r.citation === reading.citation);
+              
+              if (index !== -1) {
+                updatedReadings[index] = {
+                  ...updatedReadings[index],
+                  summaryLoading: false,
+                  summaryError: summaryError.message || 'Failed to load summary.'
+                };
+              }
+              return updatedReadings;
+            });
+            
+            return { title: reading.title, success: false, error: summaryError.message };
+          }
+        });
+      
+      // Wait for all summaries to complete
+      const results = await Promise.all(summaryPromises);
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.length - successCount;
+
+      console.log("Finished fetching summaries.");
+
+    } catch (err: any) {
+      console.error("Error fetching daily readings:", err);
+      const errorMessage = err.message || "An unknown error occurred.";
+      setError(`Failed to load readings: ${errorMessage}`);
+      setLoading(false);
+      toast({
+        title: "Error",
+        description: `Failed to load readings: ${errorMessage}`,
+        variant: "destructive",
+      });
+    }
+  }, [toast]); // Include toast in dependency array if used inside useCallback
+
+  // Fetch readings when the component mounts or selectedDate changes
+  useEffect(() => {
+    fetchReadings(selectedDate);
+  }, [selectedDate, fetchReadings]); // Add fetchReadings to dependency array
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
+  return (
+    // Main container with padding
+    <div className="space-y-6 p-4 md:p-6">
+
+      {/* Flex container for Calendar Button and Title */}
+      <div className="flex flex-row items-center justify-between mb-4"> {/* Add justify-between back */}
+         {/* Add a title where the old card title was */}
+         <h1 className="text-2xl font-bold flex items-center">
+             <Book className="mr-2 h-6 w-6 text-clergy-primary" />
+             Daily Mass Readings
+         </h1>
+         {/* New div to group buttons */}
+         <div className="flex items-center gap-4"> {/* Change gap-2 to gap-4 */}
+           <Button
+            variant="outline"
+            className={cn("gap-2")} // Keep margins removed
+            onClick={() => {
+              const formattedDate = format(selectedDate, 'MMddyy');
+              const usccbUrl = `https://bible.usccb.org/bible/readings/${formattedDate}.cfm`;
+              window.open(usccbUrl, "_blank");
+            }}
+           >
+            View Mass Readings
+           </Button>
+           {/* Calendar Popover Button */}
+           <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn( // Remove ml-4
+                    "justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateChange}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+         </div>
+      </div>
+
+       {/* Description - moved outside the flex container */}
+       <p className="text-muted-foreground mb-6">Readings for {format(selectedDate, "EEEE, MMMM d, yyyy")}</p>
+
+
+      {/* Loading State */}
+      {loading && (
+        <div className="space-y-4">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="bg-destructive/10 border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Error Loading Readings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{error}</p>
+            <Button onClick={() => fetchReadings(selectedDate)} className="mt-4">Retry</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Readings Content (Tabs) */}
+      {!loading && !error && (
+        <Tabs defaultValue="all-readings">
+          {/* Remove the TabsList as there's only one tab */}
+          {/*
+          <TabsList className="grid w-full grid-cols-1 mb-4">
+            <TabsTrigger value="all-readings">Readings</TabsTrigger>
+          </TabsList>
+          */}
+          <TabsContent value="all-readings" className="mt-0"> {/* Added mt-0 */}
+            <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+              {readings.length > 0 ? (
+                readings.map((reading, index) => (
+                  <ReadingCard key={`${reading.title}-${index}`} reading={reading} />
+                ))
+              ) : (
+                <p>No readings available for this date.</p>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
+    </div>
+  );
+};
+
+export default DailyReadings;

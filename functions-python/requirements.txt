@@ -1,0 +1,20 @@
+# functions-python/requirements.txt
+
+# Required Firebase libraries
+firebase-functions
+firebase-admin
+
+# Web framework (dependency for HTTP functions)
+Flask
+
+# For handling Cross-Origin Resource Sharing (CORS)
+flask-cors
+
+# For making external HTTP requests (CalAPI, Magisterium)
+requests
+
+# For Google Generative AI (Gemini) API calls
+google-generativeai
+
+# Google API Core libraries
+google-api-core
