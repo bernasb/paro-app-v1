@@ -1,73 +1,81 @@
-# Welcome to your Lovable project
+# Paro App
 
-## Project info
+## Overview
+Paro App is a modern web application focused on liturgical content, Catholic prayers, and Church history, built with a TypeScript/React frontend and a Firebase Functions backend. All backend logic is now implemented in TypeScript using Firebase Callable Functions.
 
-**URL**: https://lovable.dev/projects/67da2710-9609-450b-a82a-b9e05f2918fc
+---
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/67da2710-9609-450b-a82a-b9e05f2918fc) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
+## Technologies Used
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Firebase Functions (TypeScript)
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/67da2710-9609-450b-a82a-b9e05f2918fc) and click on Share -> Publish.
+## Project Structure
+- **Frontend:** `src/` — React app, organized by domain (liturgical, saints, prayers, etc.), with shared logic in `src/services/shared/`
+- **Backend:** `functions/` — Firebase Functions (TypeScript)
+  - `src/proxies/`: Callable function implementations
+  - `src/shared/`: Shared utilities and type definitions
+  - `src/index.ts`: Entry point, exports all callable functions
+- **Documentation:** `/home/linux/CascadeProjects/docs/` (see below)
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes it is!
+## Backend Endpoints
+See [API documentation](../CascadeProjects/docs/api/firebase-functions-paro-app.md):
+- `magisteriumProxy` — Magisterium AI chat
+- `dailyReadingsProxy` — Daily Mass readings
+- `readingSummaryProxy` — Reading summaries
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+All endpoints require Firebase user authentication and return standardized responses.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+---
+
+## Documentation
+Project documentation is organized in `/home/linux/CascadeProjects/docs`:
+- `guides/`: General guidance
+- `requirements/`: Project requirements/specs
+- `architecture/`: System architecture ([backend architecture](../CascadeProjects/docs/architecture/firebase-functions-architecture.md))
+- `api/`: API documentation ([backend API](../CascadeProjects/docs/api/firebase-functions-paro-app.md))
+- `tutorials/`: Step-by-step tutorials
+
+---
+
+## Development
+```sh
+# Install dependencies
+npm install
+
+# Lint, format, and test
+npm run lint
+npm run format
+npm test
+
+# Start the frontend (Vite)
+npm run dev
+
+# Deploy backend functions
+cd functions
+firebase deploy --only functions
+```
+
+---
+
+## Deployment
+- **Frontend:** Deploy via Vercel/Netlify or Firebase Hosting (if configured)
+- **Backend:** Deploy with Firebase CLI (`firebase deploy --only functions`)
+
+---
+
+## Further Reading
+- [Backend README](functions/README.md)
+- [API Docs](../CascadeProjects/docs/api/firebase-functions-paro-app.md)
+- [Architecture](../CascadeProjects/docs/architecture/firebase-functions-architecture.md)
+
+---
+
+For any questions, see the docs or reach out to the maintainers.

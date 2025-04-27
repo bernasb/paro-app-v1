@@ -8,7 +8,7 @@ import {
   cleanSummaryText, 
   getEasterVigilSummary,
   saveSummaryToCache
-} from './readingSummariesCache';
+} from '../shared/readingSummariesCache';
 
 // Cache for readings to reduce API calls
 const readingsCache: Record<string, { readings: LiturgicalReading[], timestamp: number }> = {}; // Cache enabled
@@ -232,158 +232,42 @@ function escapeRegExp(string: string): string {
 }
 
 /**
- * Gets daily mass readings from the PRODUCTION backend (Cloud Run).
+ * Calls the new Firebase Callable Function for daily readings.
  * @param date - The date to get readings for
- * @returns Promise resolving to array of liturgical readings with empty summaries
+ * @returns Promise resolving to array of liturgical readings
  */
 export const getDailyMassReadings = async (date: Date): Promise<LiturgicalReading[]> => {
+  const functions: Functions = getFunctions();
+  const callable = httpsCallable<{ date: string }, any>(functions, 'dailyReadingsProxy');
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
   const dateString = `${year}-${month}-${day}`;
-  const cacheKey = `readings_${dateString}`;
-
-  console.log(`Getting daily readings for ${dateString}`);
-
-  // Check cache first
-  const cachedData = readingsCache[cacheKey];
-  if (cachedData && Date.now() - cachedData.timestamp < READINGS_CACHE_EXPIRATION_MS) {
-    console.log(`Cache hit! Using cached readings for ${dateString}`);
-    return cachedData.readings;
+  const result: HttpsCallableResult<any> = await callable({ date: dateString });
+  if (!result.data || result.data.status !== 'success') {
+    throw new Error(result.data?.data || 'Failed to fetch daily readings from callable function');
   }
-
-  console.log(`Cache miss. Fetching daily readings for ${dateString} from PRODUCTION API`);
-
-  // --- NEW: Call production backend endpoint directly ---
-  const API_URL = 'https://paro-backend-337093354558.us-central1.run.app/daily-readings';
-
-  try {
-    // Get Firebase ID token from the currently logged-in user
-    const { getAuth } = await import('firebase/auth');
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) throw new Error('User not authenticated');
-    const idToken = await user.getIdToken();
-
-    const response = await axios.post(
-      API_URL,
-      { date: dateString },
-      {
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 60000,
-      }
-    );
-    const responseData = response.data;
-    if (responseData?.status === 'success' && Array.isArray(responseData.data)) {
-      const readings: LiturgicalReading[] = responseData.data.map((item: any) => ({
-        title: item.title,
-        citation: item.reference,
-        content: '',
-        summary: '',
-        summaryLoading: true,
-        summaryError: undefined,
-      }));
-      readingsCache[cacheKey] = {
-        readings: [...readings],
-        timestamp: Date.now(),
-      };
-      return readings;
-    } else {
-      throw new Error(responseData?.message || 'Invalid response format from server');
-    }
-  } catch (error: any) {
-    console.error('Failed to fetch daily readings from production backend:', error);
-    throw new Error(error?.message || 'Failed to fetch daily readings from the server');
-  }
+  // Adapt as needed: expects result.data.data to be array of readings
+  return result.data.data;
 };
 
 /**
- * Gets a summary for a single reading using Flask backend's /reading-summary endpoint via axios.
+ * Calls the new Firebase Callable Function for reading summaries.
  * @param reading - The reading to summarize (title and citation)
  * @returns Promise resolving to an object with summary and optional detailed explanation
  */
 export const getReadingSummary = async (reading: { title: string, citation: string }): Promise<{summary: string, detailedExplanation?: string}> => {
-  console.log(`Getting summary for reading: ${reading.title} (${reading.citation})`);
-  
-  // Special case for Epistle Psalm
-  if (reading.title === "Epistle Psalm" && reading.citation === "Psalm 118:1-2, 16-17, 22-23") {
-    console.log("Using hardcoded summary for Epistle Psalm");
-    const summary = "\"The stone that the builders rejected has become the chief cornerstone\" is a central theme during the Easter Vigil, symbolizing Christ's resurrection. This psalm signifies the triumph over death and the enduring love of God, which resonates deeply with Catholics as they celebrate Jesus' victory and the promise of eternal life. It emphasizes that what was once rejected and deemed worthless has become the foundation of salvation.";
-    
-    // Save the hardcoded summary to cache
-    console.log(`Saving hardcoded Epistle Psalm summary to cache...`);
-    saveSummaryToCache(reading.title, reading.citation, summary)
-      .then(() => console.log(`Successfully saved Epistle Psalm summary to cache`))
-      .catch(err => console.error(`Error saving Epistle Psalm summary to cache:`, err));
-    
-    return { summary };
+  const functions: Functions = getFunctions();
+  const callable = httpsCallable<{ title: string, citation: string }, any>(functions, 'readingSummaryProxy');
+  const result: HttpsCallableResult<any> = await callable({ title: reading.title, citation: reading.citation });
+  if (!result.data || result.data.status !== 'success') {
+    throw new Error(result.data?.data || 'Failed to fetch reading summary from callable function');
   }
-  
-  // Check for hardcoded Easter Vigil summaries first
-  const easterVigilSummary = getEasterVigilSummary(reading.title, reading.citation);
-  if (easterVigilSummary) {
-    console.log(`Using hardcoded Easter Vigil summary for: ${reading.title}`);
-    
-    // Save the hardcoded Easter Vigil summary to cache
-    console.log(`Saving hardcoded Easter Vigil summary to cache for: ${reading.title}`);
-    saveSummaryToCache(reading.title, reading.citation, easterVigilSummary)
-      .then(() => console.log(`Successfully saved Easter Vigil summary to cache for: ${reading.title}`))
-      .catch(err => console.error(`Error saving Easter Vigil summary to cache for ${reading.title}:`, err));
-    
-    return { summary: easterVigilSummary };
-  }
-  
-  // Use the cache service to get or fetch the summary
-  return getSummaryWithCache(
-    reading.title,
-    reading.citation,
-    async (reading) => {
-      console.log(`Fetching summary from Flask backend for: ${reading.title} (${reading.citation})`);
-      
-      // Get Firebase ID token
-      const { getAuth } = await import('firebase/auth');
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
-      const idToken = await user.getIdToken();
-      
-      // Call Flask backend
-      const API_URL = 'https://paro-backend-337093354558.us-central1.run.app/reading-summary';
-      try {
-        const response = await axios.post(
-          API_URL,
-          { title: reading.title, citation: reading.citation },
-          {
-            headers: {
-              Authorization: `Bearer ${idToken}`,
-              'Content-Type': 'application/json',
-            },
-            timeout: 60000,
-          }
-        );
-        const responseData = response.data;
-        if (responseData?.status === 'success') {
-          if (responseData.summary) {
-            return {
-              summary: cleanSummaryText(responseData.summary),
-              detailedExplanation: responseData.detailedExplanation
-                ? cleanSummaryText(responseData.detailedExplanation)
-                : undefined,
-            };
-          }
-        }
-        console.error('Backend indicated error:', responseData);
-        throw new Error(responseData?.message || 'AI response was not in the expected format');
-      } catch (error: any) {
-        console.error('Error fetching summary via backend:', error);
-        let detail = error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`Could not fetch summary: ${detail}`);
-      }
-    }
-  );
+  // Adapt as needed: expects result.data.summary and result.data.detailedExplanation
+  return {
+    summary: result.data.summary,
+    detailedExplanation: result.data.detailedExplanation
+  };
 };
 
 /**

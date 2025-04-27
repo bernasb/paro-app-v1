@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Book, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import pLimit from 'p-limit';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 // Helper function to generate date string
 const getDateString = (date: Date): string => {
@@ -30,6 +32,16 @@ const DailyReadings = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [userReady, setUserReady] = useState<boolean>(false);
+
+  // Wait for Firebase user to be loaded before fetching readings
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUserReady(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Define the fetch function using useCallback to memoize it
   const fetchReadings = useCallback(async (date: Date) => {
@@ -40,7 +52,6 @@ const DailyReadings = () => {
       // Fetch initial readings (already includes loading state for summaries)
       const fetchedReadings = await getDailyMassReadings(date);
       console.log(`Fetched ${fetchedReadings.length} initial readings.`);
-      
       // Log each reading for debugging
       console.log("Readings received from API:");
       fetchedReadings.forEach((reading, index) => {
@@ -49,9 +60,19 @@ const DailyReadings = () => {
       setReadings(fetchedReadings);
       setLoading(false); // Set loading false after initial fetch
 
-      // Asynchronously fetch summaries in parallel for faster loading
-      console.log("Starting parallel summary fetching...");
-      
+      // Asynchronously fetch summaries with limited concurrency for faster loading and less timeout risk
+      console.log("Starting limited-concurrency summary fetching...");
+      const limit = pLimit(2); // Change this number to adjust concurrency
+
+      // Get Firebase ID token ONCE for all summary requests
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        setError('You must be signed in to view summaries.');
+        return;
+      }
+      const idToken = await user.getIdToken();
+
       // First, mark Gospel Acclamation readings as not needing summaries
       const readingsToUpdate = [...fetchedReadings];
       fetchedReadings.forEach((reading, index) => {
@@ -63,87 +84,69 @@ const DailyReadings = () => {
         }
       });
       setReadings(readingsToUpdate);
-      
-      // Create an array of promises for all summaries that need to be fetched
-      const summaryPromises = fetchedReadings
-        .filter(reading => !reading.title.toLowerCase().includes('gospel acclamation'))
-        .map(async (reading) => {
-          try {
-            console.log(`Requesting summary for: ${reading.title}`);
-            // Fetch summary and detailed explanation
-            const summaryResult = await getReadingSummary({
-              title: reading.title,
-              citation: reading.citation
-            });
-            
-            console.log(`Summary received for: ${reading.title}`);
-            
-            // Update this reading with its summary and detailed explanation
-            setReadings(prevReadings => {
-              const updatedReadings = [...prevReadings];
-              const index = updatedReadings.findIndex(r => 
-                r.title === reading.title && r.citation === reading.citation);
-              
-              if (index !== -1) {
-                updatedReadings[index] = {
-                  ...updatedReadings[index],
-                  summary: summaryResult.summary,
-                  detailedExplanation: summaryResult.detailedExplanation,
-                  summaryLoading: false,
-                  summaryError: undefined
-                };
-              }
-              return updatedReadings;
-            });
-            
-            return { title: reading.title, success: true };
-          } catch (summaryError: any) {
-            console.error(`Error fetching summary for ${reading.title}:`, summaryError);
-            
-            // Update this reading with error state
-            setReadings(prevReadings => {
-              const updatedReadings = [...prevReadings];
-              const index = updatedReadings.findIndex(r => 
-                r.title === reading.title && r.citation === reading.citation);
-              
-              if (index !== -1) {
-                updatedReadings[index] = {
-                  ...updatedReadings[index],
-                  summaryLoading: false,
-                  summaryError: summaryError.message || 'Failed to load summary.'
-                };
-              }
-              return updatedReadings;
-            });
-            
-            return { title: reading.title, success: false, error: summaryError.message };
-          }
-        });
-      
-      // Wait for all summaries to complete
-      const results = await Promise.all(summaryPromises);
-      const successCount = results.filter(r => r.success).length;
-      const failCount = results.length - successCount;
 
-      console.log("Finished fetching summaries.");
-
+      // Fetch summaries with concurrency limit and update UI as each arrives
+      await Promise.all(
+        fetchedReadings
+          .filter(reading => !reading.title.toLowerCase().includes('gospel acclamation'))
+          .map(reading =>
+            limit(async () => {
+              try {
+                console.log(`Requesting summary for: ${reading.title}`);
+                // Pass idToken to getReadingSummary
+                const summaryResult = await getReadingSummary({
+                  title: reading.title,
+                  citation: reading.citation,
+                  idToken
+                });
+                console.log(`Summary received for: ${reading.title}`);
+                setReadings(prevReadings => {
+                  const updatedReadings = [...prevReadings];
+                  const index = updatedReadings.findIndex(r => 
+                    r.title === reading.title && r.citation === reading.citation);
+                  if (index !== -1) {
+                    updatedReadings[index] = {
+                      ...updatedReadings[index],
+                      summary: summaryResult.summary,
+                      detailedExplanation: summaryResult.detailedExplanation,
+                      summaryLoading: false,
+                      summaryError: undefined
+                    };
+                  }
+                  return updatedReadings;
+                });
+              } catch (summaryError: any) {
+                console.error(`Error fetching summary for ${reading.title}:`, summaryError);
+                setReadings(prevReadings => {
+                  const updatedReadings = [...prevReadings];
+                  const index = updatedReadings.findIndex(r => 
+                    r.title === reading.title && r.citation === reading.citation);
+                  if (index !== -1) {
+                    updatedReadings[index] = {
+                      ...updatedReadings[index],
+                      summaryLoading: false,
+                      summaryError: summaryError.message || 'Failed to load summary.'
+                    };
+                  }
+                  return updatedReadings;
+                });
+              }
+            })
+          )
+      );
     } catch (err: any) {
       console.error("Error fetching daily readings:", err);
-      const errorMessage = err.message || "An unknown error occurred.";
-      setError(`Failed to load readings: ${errorMessage}`);
+      setError(err.message || 'Failed to fetch readings.');
       setLoading(false);
-      toast({
-        title: "Error",
-        description: `Failed to load readings: ${errorMessage}`,
-        variant: "destructive",
-      });
     }
-  }, [toast]); // Include toast in dependency array if used inside useCallback
+  }, []);
 
-  // Fetch readings when the component mounts or selectedDate changes
+  // Fetch readings when the component mounts or selectedDate changes AND user is ready
   useEffect(() => {
-    fetchReadings(selectedDate);
-  }, [selectedDate, fetchReadings]); // Add fetchReadings to dependency array
+    if (userReady) {
+      fetchReadings(selectedDate);
+    }
+  }, [selectedDate, userReady, fetchReadings]);
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
