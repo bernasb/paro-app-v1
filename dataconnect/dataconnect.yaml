@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "paro-app-v1"
+location: "us-east1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "paro-app-v1-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

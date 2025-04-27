@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Firebase Auth Test</title>
+    <!-- Firebase App (core) SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <!-- Firebase Auth SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script>
+      // Firebase project config
+      const firebaseConfig = {
+        apiKey: "AIzaSyAIsZCA26xU2YkEOLSXCzv7r0bH_KKY9H0",
+        authDomain: "clergy-connect-idx-ver.firebaseapp.com",
+        databaseURL: "https://clergy-connect-idx-ver-default-rtdb.firebaseio.com",
+        projectId: "clergy-connect-idx-ver",
+        storageBucket: "clergy-connect-idx-ver.firebasestorage.app",
+        messagingSenderId: "337093354558",
+        appId: "1:337093354558:web:341b98a5eb7dac9c365d6f",
+        measurementId: "G-PC76D5EETH"
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+
+      // Wait for DOM to load
+      document.addEventListener('DOMContentLoaded', function() {
+        // Example: Sign in a test user (replace with your test credentials)
+        firebase.auth().signInWithEmailAndPassword('clergyconnectapp@gmail.com', 'PadrePio25!')
+          .then(() => {
+            // Get the ID token
+            return firebase.auth().currentUser.getIdToken(/* forceRefresh */ true);
+          })
+          .then(idToken => {
+            // Show the token on the page so you can copy it for Postman!
+            document.getElementById('token').textContent = idToken;
+          })
+          .catch(error => {
+            document.getElementById('token').textContent = 'Error: ' + error.message;
+          });
+      });
+    </script>
+  </head>
+  <body>
+    <h2>Your Firebase ID Token:</h2>
+    <pre id="token">Loading...</pre>
+  </body>
+</html>

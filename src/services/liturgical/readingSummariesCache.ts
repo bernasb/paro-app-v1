@@ -2,8 +2,8 @@ import { collection, doc, getDoc, setDoc, updateDoc, increment, getDocs, deleteD
 import { db } from '@/integrations/firebase/client';
 import { MagisteriumMessage } from '@/types/magisterium';
 
-// Debug flag - set to false in production for better performance
-const DEBUG_MODE = false;
+// Debug flag - set to true in production for better performance
+const DEBUG_MODE = true;
 
 // Collection reference
 const COLLECTION_NAME = 'readingSummaries';

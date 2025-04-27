@@ -232,7 +232,7 @@ function escapeRegExp(string: string): string {
 }
 
 /**
- * Gets daily mass readings using Firebase Cloud Function.
+ * Gets daily mass readings from the PRODUCTION backend (Cloud Run).
  * @param date - The date to get readings for
  * @returns Promise resolving to array of liturgical readings with empty summaries
  */
@@ -252,78 +252,56 @@ export const getDailyMassReadings = async (date: Date): Promise<LiturgicalReadin
     return cachedData.readings;
   }
 
-  console.log(`Cache miss. Fetching daily readings for ${dateString} from API`);
+  console.log(`Cache miss. Fetching daily readings for ${dateString} from PRODUCTION API`);
 
-  // Import functions from client.ts to ensure consistent initialization
-  const { functions } = await import('@/integrations/firebase/client');
-  
-  // Define the callable function with explicit configuration
-  const callDailyReadings = httpsCallable(
-    functions,
-    'dailyReadingsProxy',
-    {
-      timeout: 60000 // 60 second timeout (increased from 30s)
-    }
-  );
-  
-  console.log("Callable function 'dailyReadingsProxy' defined with configuration");
+  // --- NEW: Call production backend endpoint directly ---
+  const API_URL = 'https://paro-backend-337093354558.us-central1.run.app/daily-readings';
 
-  // Retry logic for transient errors
-  const maxRetries = 3;
-  let attempt = 0;
-  let lastError: any;
+  try {
+    // Get Firebase ID token from the currently logged-in user
+    const { getAuth } = await import('firebase/auth');
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+    const idToken = await user.getIdToken();
 
-  while (attempt < maxRetries) {
-    attempt++;
-    console.log(`Attempt ${attempt} to fetch daily readings`);
-
-    try {
-      const result = await callDailyReadings({ date: dateString });
-      console.log("Raw Cloud Function result:", result);
-
-      const responseData = result.data as any;
-      if (responseData?.status === 'success' && Array.isArray(responseData.data)) {
-        // Map the response data to the LiturgicalReading[] format with loading summaries
-        const readings: LiturgicalReading[] = responseData.data.map((item: any) => ({
-          title: item.title,
-          citation: item.reference,
-          content: '',
-          summary: '', // Empty summary initially
-          summaryLoading: true, // Mark as loading
-          summaryError: undefined,
-        }));
-
-        console.log('Successfully mapped readings:', readings);
-        
-        // Save to cache
-        readingsCache[cacheKey] = {
-          readings: [...readings], // Create a copy to avoid reference issues
-          timestamp: Date.now()
-        };
-        console.log(`Saved readings to cache for ${dateString}`);
-        
-        return readings;
-      } else {
-        throw new Error(responseData?.data || 'Invalid response format from server');
+    const response = await axios.post(
+      API_URL,
+      { date: dateString },
+      {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 60000,
       }
-    } catch (error: any) {
-      lastError = error;
-      console.error(`Attempt ${attempt} failed with error:`, error);
-      
-      if (attempt < maxRetries) {
-        const delay = Math.pow(2, attempt - 1) * 1000;
-        console.log(`Retrying after ${delay}ms delay...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
+    );
+    const responseData = response.data;
+    if (responseData?.status === 'success' && Array.isArray(responseData.data)) {
+      const readings: LiturgicalReading[] = responseData.data.map((item: any) => ({
+        title: item.title,
+        citation: item.reference,
+        content: '',
+        summary: '',
+        summaryLoading: true,
+        summaryError: undefined,
+      }));
+      readingsCache[cacheKey] = {
+        readings: [...readings],
+        timestamp: Date.now(),
+      };
+      return readings;
+    } else {
+      throw new Error(responseData?.message || 'Invalid response format from server');
     }
+  } catch (error: any) {
+    console.error('Failed to fetch daily readings from production backend:', error);
+    throw new Error(error?.message || 'Failed to fetch daily readings from the server');
   }
-
-  console.error('All attempts to fetch daily readings failed');
-  throw new Error(lastError?.message || 'Failed to fetch daily readings from the server');
 };
 
 /**
- * Gets a summary for a single reading using Magisterium API with caching.
+ * Gets a summary for a single reading using Flask backend's /reading-summary endpoint via axios.
  * @param reading - The reading to summarize (title and citation)
  * @returns Promise resolving to an object with summary and optional detailed explanation
  */
@@ -363,48 +341,45 @@ export const getReadingSummary = async (reading: { title: string, citation: stri
     reading.title,
     reading.citation,
     async (reading) => {
-      console.log(`Fetching summary from Gemini API for: ${reading.title} (${reading.citation})`);
+      console.log(`Fetching summary from Flask backend for: ${reading.title} (${reading.citation})`);
       
-      // Import functions from client.ts to ensure consistent initialization
-      const { functions } = await import('@/integrations/firebase/client');
+      // Get Firebase ID token
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error('User not authenticated');
+      const idToken = await user.getIdToken();
       
-      // Define the callable function with explicit configuration
-      const callReadingSummary = httpsCallable(
-        functions,
-        'readingSummaryProxy',
-        {
-          timeout: 60000 // 60 second timeout
-        }
-      );
-      
+      // Call Flask backend
+      const API_URL = 'https://paro-backend-337093354558.us-central1.run.app/reading-summary';
       try {
-        const result = await callReadingSummary({
-          title: reading.title,
-          citation: reading.citation
-        });
-        
-        console.log("Raw Cloud Function result:", result);
-        
-        const responseData = result.data as any;
+        const response = await axios.post(
+          API_URL,
+          { title: reading.title, citation: reading.citation },
+          {
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 60000,
+          }
+        );
+        const responseData = response.data;
         if (responseData?.status === 'success') {
-          if (responseData.responseType === 'json' && responseData.data.summary) {
-            // New format with both summary and detailed explanation
+          if (responseData.summary) {
             return {
-              summary: cleanSummaryText(responseData.data.summary),
-              detailedExplanation: responseData.data.detailedExplanation ? 
-                cleanSummaryText(responseData.data.detailedExplanation) : undefined
+              summary: cleanSummaryText(responseData.summary),
+              detailedExplanation: responseData.detailedExplanation
+                ? cleanSummaryText(responseData.detailedExplanation)
+                : undefined,
             };
-          } else if (responseData.data) {
-            // Legacy format - just a string
-            return { summary: cleanSummaryText(responseData.data) };
           }
         }
-        
-        console.error("Backend indicated error:", responseData);
-        throw new Error(responseData?.data || "AI response was not in the expected format");
-      } catch (error: unknown) {
-        console.error("Error fetching summary via proxy:", error);
-        let detail = (error instanceof Error) ? error.message : "Unknown error";
+        console.error('Backend indicated error:', responseData);
+        throw new Error(responseData?.message || 'AI response was not in the expected format');
+      } catch (error: any) {
+        console.error('Error fetching summary via backend:', error);
+        let detail = error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`Could not fetch summary: ${detail}`);
       }
     }
