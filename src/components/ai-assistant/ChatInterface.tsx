@@ -1,8 +1,7 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageList } from "@/components/ai-assistant/MessageList";
-import { MessageInput } from "@/components/ai-assistant/MessageInput";
-import { Message } from "@/types/ai-assistant";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MessageList } from '@/components/ai-assistant/MessageList';
+import { MessageInput } from '@/components/ai-assistant/MessageInput';
+import { Message } from '@/types/ai-assistant';
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -27,18 +26,17 @@ export function ChatInterface({
         <div className="flex justify-between items-center">
           <div>
             <CardTitle className="text-2xl">Magisterium AI Assistant</CardTitle>
-            <CardDescription className="text-lg">Ask theological questions and get AI-powered assistance</CardDescription>
+            <CardDescription className="text-lg">
+              Ask theological questions and get AI-powered assistance
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        <MessageList 
-          messages={messages} 
-          onRelatedQuestionClick={onRelatedQuestionClick} 
-        />
-        <MessageInput 
-          onSendMessage={onSendMessage} 
-          isProcessing={isProcessing} 
+        <MessageList messages={messages} onRelatedQuestionClick={onRelatedQuestionClick} />
+        <MessageInput
+          onSendMessage={onSendMessage}
+          isProcessing={isProcessing}
           onVoiceQuery={onVoiceQuery} // Pass prop down
           isListening={isListening} // Pass prop down
         />

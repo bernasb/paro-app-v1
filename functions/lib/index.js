@@ -33,39 +33,12 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readingSummaryProxy = exports.dailyReadingsProxy = exports.magisteriumProxy = void 0;
-const functions = __importStar(require("firebase-functions"));
+exports.magisteriumProxy = exports.readingSummaryProxy = exports.dailyReadingsProxy = void 0;
 const admin = __importStar(require("firebase-admin"));
 admin.initializeApp();
-// Replace with your actual logic to call Magisterium AI
-async function getMagisteriumResponse(prompt) {
-    // Example: Replace with actual API call logic
-    // const response = await axios.post('https://magisterium.api/endpoint', { prompt });
-    // return response.data;
-    return {
-        choices: [
-            { text: 'Sample answer for: ' + prompt }
-        ],
-        citations: [],
-        related_questions: []
-    };
-}
-exports.magisteriumProxy = functions.https.onCall(async (data, context) => {
-    if (!data.prompt) {
-        throw new functions.https.HttpsError('invalid-argument', 'Missing prompt');
-    }
-    // Optionally, check authentication:
-    // if (!context.auth) {
-    //   throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
-    // }
-    const magisterium_response = await getMagisteriumResponse(data.prompt);
-    return {
-        status: "success",
-        responseType: "json",
-        data: magisterium_response
-    };
-});
-var dailyReadingsProxy_1 = require("./dailyReadingsProxy");
+const dailyReadingsProxy_1 = require("./proxies/dailyReadingsProxy");
 Object.defineProperty(exports, "dailyReadingsProxy", { enumerable: true, get: function () { return dailyReadingsProxy_1.dailyReadingsProxy; } });
-var readingSummaryProxy_1 = require("./readingSummaryProxy");
+const readingSummaryProxy_1 = require("./proxies/readingSummaryProxy");
 Object.defineProperty(exports, "readingSummaryProxy", { enumerable: true, get: function () { return readingSummaryProxy_1.readingSummaryProxy; } });
+const magisteriumProxy_1 = require("./proxies/magisteriumProxy");
+Object.defineProperty(exports, "magisteriumProxy", { enumerable: true, get: function () { return magisteriumProxy_1.magisteriumProxy; } });

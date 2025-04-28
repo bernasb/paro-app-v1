@@ -1,11 +1,13 @@
 # Paro App
 
 ## Overview
+
 Paro App is a modern web application focused on liturgical content, Catholic prayers, and Church history, built with a TypeScript/React frontend and a Firebase Functions backend. All backend logic is now implemented in TypeScript using Firebase Callable Functions.
 
 ---
 
 ## Technologies Used
+
 - Vite
 - TypeScript
 - React
@@ -16,6 +18,7 @@ Paro App is a modern web application focused on liturgical content, Catholic pra
 ---
 
 ## Project Structure
+
 - **Frontend:** `src/` — React app, organized by domain (liturgical, saints, prayers, etc.), with shared logic in `src/services/shared/`
 - **Backend:** `functions/` — Firebase Functions (TypeScript)
   - `src/proxies/`: Callable function implementations
@@ -26,7 +29,9 @@ Paro App is a modern web application focused on liturgical content, Catholic pra
 ---
 
 ## Backend Endpoints
+
 See [API documentation](../CascadeProjects/docs/api/firebase-functions-paro-app.md):
+
 - `magisteriumProxy` — Magisterium AI chat
 - `dailyReadingsProxy` — Daily Mass readings
 - `readingSummaryProxy` — Reading summaries
@@ -36,7 +41,9 @@ All endpoints require Firebase user authentication and return standardized respo
 ---
 
 ## Documentation
+
 Project documentation is organized in `/home/linux/CascadeProjects/docs`:
+
 - `guides/`: General guidance
 - `requirements/`: Project requirements/specs
 - `architecture/`: System architecture ([backend architecture](../CascadeProjects/docs/architecture/firebase-functions-architecture.md))
@@ -46,6 +53,7 @@ Project documentation is organized in `/home/linux/CascadeProjects/docs`:
 ---
 
 ## Development
+
 ```sh
 # Install dependencies
 npm install
@@ -66,12 +74,14 @@ firebase deploy --only functions
 ---
 
 ## Deployment
+
 - **Frontend:** Deploy via Vercel/Netlify or Firebase Hosting (if configured)
 - **Backend:** Deploy with Firebase CLI (`firebase deploy --only functions`)
 
 ---
 
 ## Further Reading
+
 - [Backend README](functions/README.md)
 - [API Docs](../CascadeProjects/docs/api/firebase-functions-paro-app.md)
 - [Architecture](../CascadeProjects/docs/architecture/firebase-functions-architecture.md)

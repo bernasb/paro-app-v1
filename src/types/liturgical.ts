@@ -13,5 +13,5 @@ export interface LiturgicalEvent {
   name: string;
   description: string;
   color: string;
-  importance: "solemnity" | "feast" | "memorial" | "optional memorial" | "other";
+  importance: 'solemnity' | 'feast' | 'memorial' | 'optional memorial' | 'other';
 }

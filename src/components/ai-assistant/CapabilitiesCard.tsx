@@ -1,20 +1,28 @@
-
-import { ExternalLink } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export const CapabilitiesCard = () => {
   const capabilities = [
     {
-      title: "Catholic Theological Q&A",
-      description: "Get answers to theological questions with citations from Catholic Church documents.",
+      title: 'Catholic Theological Q&A',
+      description:
+        'Get answers to theological questions with citations from Catholic Church documents.',
     },
     {
-      title: "Sermon Preparation",
-      description: "Get help with sermon outlines, themes, and relevant scripture references.",
+      title: 'Sermon Preparation',
+      description: 'Get help with sermon outlines, themes, and relevant scripture references.',
     },
     {
-      title: "Catholic Teaching Guidance",
-      description: "Learn about Church positions on ethical and moral questions with authoritative sources.",
+      title: 'Catholic Teaching Guidance',
+      description:
+        'Learn about Church positions on ethical and moral questions with authoritative sources.',
     },
   ];
 
@@ -35,9 +43,9 @@ export const CapabilitiesCard = () => {
         </div>
       </CardContent>
       <CardFooter className="border-t pt-4">
-        <a 
-          href="https://www.magisterium.com" 
-          target="_blank" 
+        <a
+          href="https://www.magisterium.com"
+          target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-clergy-primary hover:underline flex items-center gap-1"
         >

@@ -1,45 +1,45 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
 
 export function WelcomeCard() {
-  const [greeting, setGreeting] = useState("");
-  const [currentTime, setCurrentTime] = useState("");
-  
+  const [greeting, setGreeting] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
+
   useEffect(() => {
     // Set greeting based on time of day
     const hour = new Date().getHours();
-    let newGreeting = "";
-    
+    let newGreeting = '';
+
     if (hour < 12) {
-      newGreeting = "Good morning";
+      newGreeting = 'Good morning';
     } else if (hour < 18) {
-      newGreeting = "Good afternoon";
+      newGreeting = 'Good afternoon';
     } else {
-      newGreeting = "Good evening";
+      newGreeting = 'Good evening';
     }
-    
+
     setGreeting(newGreeting);
-    
+
     // Format current time
     const formatTime = () => {
       const date = new Date();
       setCurrentTime(
-        date.toLocaleTimeString([], { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        }) + ' - ' + 
-        date.toLocaleDateString([], { 
-          weekday: 'long',
-          month: 'long', 
-          day: 'numeric' 
-        })
+        date.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }) +
+          ' - ' +
+          date.toLocaleDateString([], {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+          }),
       );
     };
-    
+
     formatTime();
     const interval = setInterval(formatTime, 1000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -50,7 +50,10 @@ export function WelcomeCard() {
         <CardDescription className="text-white/80">{currentTime}</CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Welcome to your personalized ministry assistant. Use voice commands or navigate through the sidebar to manage your schedule, tasks, and resources.</p>
+        <p>
+          Welcome to your personalized ministry assistant. Use voice commands or navigate through
+          the sidebar to manage your schedule, tasks, and resources.
+        </p>
       </CardContent>
     </Card>
   );

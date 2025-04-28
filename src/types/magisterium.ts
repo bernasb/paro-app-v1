@@ -1,5 +1,5 @@
 export interface MagisteriumMessage {
-  role: "user" | "assistant" | "system";
+  role: 'user' | 'assistant' | 'system';
   content: string;
 }
 

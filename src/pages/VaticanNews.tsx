@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Cross, ExternalLink, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
-import { format } from "date-fns";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Cross, ExternalLink, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/integrations/firebase/client';
+import { format } from 'date-fns';
 
 // Type for RSS feed items
 interface RSSItem {
@@ -34,30 +34,30 @@ const VaticanNews = () => {
   // Function to fetch RSS feed configurations from Firestore
   const fetchRSSConfigs = async () => {
     try {
-      const configsCollection = collection(db, "rssFeeds");
+      const configsCollection = collection(db, 'rssFeeds');
       const configsSnapshot = await getDocs(configsCollection);
-      
+
       if (configsSnapshot.empty) {
-        setError("No RSS feeds configured. Please add feeds in the Admin page.");
+        setError('No RSS feeds configured. Please add feeds in the Admin page.');
         setLoading(false);
         return [];
       }
-      
+
       const configs: RSSFeedConfig[] = [];
       configsSnapshot.forEach((doc) => {
         const data = doc.data();
         configs.push({
           id: doc.id,
           url: data.url,
-          name: data.name
+          name: data.name,
         });
       });
-      
+
       setFeedConfigs(configs);
       return configs;
     } catch (err) {
-      console.error("Error fetching RSS configurations:", err);
-      setError("Failed to load RSS feed configurations.");
+      console.error('Error fetching RSS configurations:', err);
+      setError('Failed to load RSS feed configurations.');
       setLoading(false);
       return [];
     }
@@ -67,53 +67,53 @@ const VaticanNews = () => {
   const fetchRSSFeeds = async (configs: RSSFeedConfig[]) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // If no configs, show error
       if (configs.length === 0) {
-        setError("No RSS feeds configured. Please add feeds in the Admin page.");
+        setError('No RSS feeds configured. Please add feeds in the Admin page.');
         setLoading(false);
         return;
       }
-      
+
       // Create a proxy URL for CORS issues
       const createProxyUrl = (url: string) => {
         return `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
       };
-      
+
       // Fetch all feeds in parallel
       const feedPromises = configs.map(async (config) => {
         try {
           const response = await fetch(createProxyUrl(config.url));
           const data = await response.json();
-          
+
           if (!data.contents) {
             throw new Error(`Failed to fetch feed from ${config.name}`);
           }
-          
+
           // Parse XML content
           const parser = new DOMParser();
-          const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-          
+          const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
+
           // Extract items
-          const items = xmlDoc.querySelectorAll("item");
+          const items = xmlDoc.querySelectorAll('item');
           const parsedItems: RSSItem[] = [];
-          
+
           items.forEach((item) => {
-            const title = item.querySelector("title")?.textContent || "No Title";
-            const link = item.querySelector("link")?.textContent || "#";
-            const pubDate = item.querySelector("pubDate")?.textContent || "";
-            const description = item.querySelector("description")?.textContent || "";
-            
+            const title = item.querySelector('title')?.textContent || 'No Title';
+            const link = item.querySelector('link')?.textContent || '#';
+            const pubDate = item.querySelector('pubDate')?.textContent || '';
+            const description = item.querySelector('description')?.textContent || '';
+
             parsedItems.push({
               title,
               link,
               pubDate,
               description,
-              source: config.name
+              source: config.name,
             });
           });
-          
+
           return parsedItems;
         } catch (err) {
           console.error(`Error fetching feed ${config.name}:`, err);
@@ -121,24 +121,24 @@ const VaticanNews = () => {
           return [];
         }
       });
-      
+
       // Wait for all feeds to be fetched
       const results = await Promise.all(feedPromises);
-      
+
       // Combine all feed items and sort by date (newest first)
       const allItems = results.flat().sort((a, b) => {
         return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
       });
-      
+
       setFeedItems(allItems);
       setLoading(false);
-      
+
       if (allItems.length === 0) {
-        setError("No news items found in the configured feeds.");
+        setError('No news items found in the configured feeds.');
       }
     } catch (err) {
-      console.error("Error fetching RSS feeds:", err);
-      setError("Failed to load news feeds. Please try again later.");
+      console.error('Error fetching RSS feeds:', err);
+      setError('Failed to load news feeds. Please try again later.');
       setLoading(false);
     }
   };
@@ -148,8 +148,8 @@ const VaticanNews = () => {
     const configs = await fetchRSSConfigs();
     await fetchRSSFeeds(configs);
     toast({
-      title: "Feeds Refreshed",
-      description: "The latest news has been loaded.",
+      title: 'Feeds Refreshed',
+      description: 'The latest news has been loaded.',
     });
   };
 
@@ -159,7 +159,7 @@ const VaticanNews = () => {
       const configs = await fetchRSSConfigs();
       await fetchRSSFeeds(configs);
     };
-    
+
     loadFeeds();
   }, []);
 
@@ -175,9 +175,9 @@ const VaticanNews = () => {
 
   // Function to strip HTML tags
   const stripHtml = (html: string) => {
-    const tmp = document.createElement("DIV");
+    const tmp = document.createElement('DIV');
     tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || "";
+    return tmp.textContent || tmp.innerText || '';
   };
 
   return (
@@ -187,11 +187,7 @@ const VaticanNews = () => {
           <Cross className="mr-2 h-6 w-6 text-clergy-primary" />
           Vatican News
         </h1>
-        <Button 
-          variant="outline" 
-          onClick={refreshFeeds} 
-          disabled={loading}
-        >
+        <Button variant="outline" onClick={refreshFeeds} disabled={loading}>
           {loading ? (
             <>
               <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -205,7 +201,7 @@ const VaticanNews = () => {
           )}
         </Button>
       </div>
-      
+
       {/* Loading State */}
       {loading && (
         <div className="space-y-4">
@@ -224,7 +220,7 @@ const VaticanNews = () => {
           ))}
         </div>
       )}
-      
+
       {/* Error State */}
       {!loading && error && (
         <Card className="bg-destructive/10 border-destructive">
@@ -233,11 +229,13 @@ const VaticanNews = () => {
           </CardHeader>
           <CardContent>
             <p>{error}</p>
-            <Button onClick={refreshFeeds} className="mt-4">Retry</Button>
+            <Button onClick={refreshFeeds} className="mt-4">
+              Retry
+            </Button>
           </CardContent>
         </Card>
       )}
-      
+
       {/* News Items */}
       {!loading && !error && feedItems.length > 0 && (
         <div className="space-y-4">
@@ -253,11 +251,11 @@ const VaticanNews = () => {
               <CardContent>
                 <div className="max-w-3xl">
                   <p className="mb-4 text-pretty leading-relaxed">{stripHtml(item.description)}</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="gap-2"
-                    onClick={() => window.open(item.link, "_blank")}
+                    onClick={() => window.open(item.link, '_blank')}
                   >
                     <ExternalLink className="h-4 w-4" />
                     Read Full Article
@@ -268,7 +266,7 @@ const VaticanNews = () => {
           ))}
         </div>
       )}
-      
+
       {/* No Items State */}
       {!loading && !error && feedItems.length === 0 && (
         <Card>
@@ -276,8 +274,13 @@ const VaticanNews = () => {
             <CardTitle>No News Items</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>No news items are currently available. Please check your RSS feed configuration or try again later.</p>
-            <Button onClick={refreshFeeds} className="mt-4">Refresh</Button>
+            <p>
+              No news items are currently available. Please check your RSS feed configuration or try
+              again later.
+            </p>
+            <Button onClick={refreshFeeds} className="mt-4">
+              Refresh
+            </Button>
           </CardContent>
         </Card>
       )}

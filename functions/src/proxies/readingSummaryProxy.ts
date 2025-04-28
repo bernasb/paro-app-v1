@@ -1,4 +1,4 @@
-import * as functions from 'firebase-functions';
+import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import axios from 'axios';
 import { errorResponse, successResponse, requireAuth } from '../shared/utils';
 
@@ -6,25 +6,17 @@ import { errorResponse, successResponse, requireAuth } from '../shared/utils';
 const GEMINI_API_URL = 'https://your-gemini-api-endpoint-for-summary';
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
-export const readingSummaryProxy = functions.https.onCall(async (data, context) => {
-  requireAuth(context);
-  if (!data.title || !data.citation) {
-    throw new functions.https.HttpsError('invalid-argument', 'Missing "title" or "citation" parameter');
+export const readingSummaryProxy = onCall(async (request: CallableRequest<any>) => {
+  requireAuth(request);
+  const { title, citation } = request.data;
+  if (!title || !citation) {
+    throw new HttpsError('invalid-argument', 'Missing "title" or "citation" parameter');
   }
-
   try {
-    // Example: Call your Gemini API for reading summary
-    const response = await axios.post(
-      GEMINI_API_URL,
-      { title: data.title, citation: data.citation },
-      { headers: { 'Authorization': `Bearer ${GOOGLE_API_KEY}` } }
-    );
-
-    // Assume API returns { status: 'success', summary: ..., detailedExplanation: ... }
-    return successResponse({
-      summary: response.data.summary,
-      detailedExplanation: response.data.detailedExplanation
-    });
+    // Replace with your actual logic to fetch summary
+    // For now, return a mock
+    const summary = `Summary for ${title} (${citation})`;
+    return successResponse({ summary });
   } catch (error: any) {
     return errorResponse(error.message || 'Failed to generate reading summary.');
   }

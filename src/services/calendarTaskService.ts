@@ -1,6 +1,5 @@
-
-import { Task } from "@/components/tasks/TaskDialog";
-import { formatDueDateTime } from "@/utils/dateTimeUtils";
+import { Task } from '@/components/tasks/TaskDialog';
+import { formatDueDateTime } from '@/utils/dateTimeUtils';
 
 // Example calendar event interface (would come from Google Calendar API)
 interface CalendarEvent {
@@ -20,17 +19,17 @@ interface CalendarEvent {
 export const calendarEventToTask = (event: CalendarEvent): Task => {
   // Parse the event start time
   const startDate = new Date(event.start.dateTime);
-  
+
   // Format time as 12-hour AM/PM
   const hours = startDate.getHours();
   const minutes = startDate.getMinutes().toString().padStart(2, '0');
   const period = hours >= 12 ? 'PM' : 'AM';
   const hours12 = hours % 12 || 12;
   const time = `${hours12}:${minutes} ${period}`;
-  
+
   // Create a due date string in our format
   const dueDate = formatDueDateTime(startDate, time, false);
-  
+
   return {
     id: Date.now(), // Generate temporary ID
     title: event.summary,
@@ -48,14 +47,11 @@ export const calendarEventToTask = (event: CalendarEvent): Task => {
  */
 const isUrgentEvent = (event: CalendarEvent): boolean => {
   const urgentKeywords = ['urgent', 'important', 'deadline', 'due', 'asap'];
-  
+
   // Check summary and description for urgent keywords
-  const textToSearch = [
-    event.summary,
-    event.description
-  ].filter(Boolean).join(' ').toLowerCase();
-  
-  return urgentKeywords.some(keyword => textToSearch.includes(keyword));
+  const textToSearch = [event.summary, event.description].filter(Boolean).join(' ').toLowerCase();
+
+  return urgentKeywords.some((keyword) => textToSearch.includes(keyword));
 };
 
 /**
@@ -64,14 +60,11 @@ const isUrgentEvent = (event: CalendarEvent): boolean => {
  */
 const isImportantEvent = (event: CalendarEvent): boolean => {
   const importantKeywords = ['important', 'critical', 'key', 'primary', 'essential'];
-  
+
   // Check summary and description for important keywords
-  const textToSearch = [
-    event.summary,
-    event.description
-  ].filter(Boolean).join(' ').toLowerCase();
-  
-  return importantKeywords.some(keyword => textToSearch.includes(keyword));
+  const textToSearch = [event.summary, event.description].filter(Boolean).join(' ').toLowerCase();
+
+  return importantKeywords.some((keyword) => textToSearch.includes(keyword));
 };
 
 /**
@@ -82,9 +75,9 @@ export const getUpcomingCalendarTasks = (events: CalendarEvent[]): Task[] => {
   const now = new Date();
   const threeDaysFromNow = new Date(now);
   threeDaysFromNow.setDate(now.getDate() + 3);
-  
+
   return events
-    .filter(event => {
+    .filter((event) => {
       const eventDate = new Date(event.start.dateTime);
       return eventDate >= now && eventDate <= threeDaysFromNow;
     })

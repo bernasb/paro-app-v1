@@ -1,4 +1,3 @@
-
 // Define the structure for a single citation (align with Message type)
 export interface Citation {
   cited_text: string;
@@ -13,7 +12,7 @@ export interface Citation {
 
 export type Message = {
   id: number | string; // Allow string IDs for temporary placeholders
-  role: "user" | "assistant" | "system";
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
   citations?: Array<Citation>; // Use the detailed Citation interface

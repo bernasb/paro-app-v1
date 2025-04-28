@@ -1,10 +1,9 @@
-
-import { useGoogleAuth } from "@/contexts/GoogleAuthContext";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, UserCircle } from "lucide-react"; // Use UserCircle or similar for icon
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton for loading state
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LogOut, UserCircle } from 'lucide-react'; // Use UserCircle or similar for icon
+import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton for loading state
 
 interface GoogleAuthFormProps {
   serviceName: string;
@@ -17,10 +16,10 @@ const GoogleAuthForm = ({ serviceName, serviceIcon, onSuccess }: GoogleAuthFormP
   const { user, isAuthenticated, signInWithGoogle, logout, loading, userEmail } = useGoogleAuth();
 
   const handleConnect = async () => {
-    await signInWithGoogle(); 
+    await signInWithGoogle();
     // onSuccess callback could be triggered here or based on user state change if needed
     if (user && onSuccess) {
-        onSuccess();
+      onSuccess();
     }
   };
 
@@ -31,15 +30,15 @@ const GoogleAuthForm = ({ serviceName, serviceIcon, onSuccess }: GoogleAuthFormP
   // Display loading skeleton while checking auth state initially
   if (loading) {
     return (
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-6 w-48 mb-2" />
-                <Skeleton className="h-4 w-full" />
-            </CardHeader>
-            <CardContent>
-                <Skeleton className="h-10 w-full" />
-            </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48 mb-2" />
+          <Skeleton className="h-4 w-full" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
     );
   }
 
@@ -52,9 +51,7 @@ const GoogleAuthForm = ({ serviceName, serviceIcon, onSuccess }: GoogleAuthFormP
             {serviceIcon}
             Connected to {serviceName}
           </CardTitle>
-          <CardDescription>
-            Your account is connected via Google.
-          </CardDescription>
+          <CardDescription>Your account is connected via Google.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -63,14 +60,14 @@ const GoogleAuthForm = ({ serviceName, serviceIcon, onSuccess }: GoogleAuthFormP
                 <UserCircle size={18} />
                 <span className="font-medium">{user.displayName || userEmail || 'N/A'}</span>
               </p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleDisconnect}
                 className="gap-2"
                 disabled={loading} // Disable button while logging out
               >
                 <LogOut size={16} />
-                {loading ? "Disconnecting..." : "Disconnect"}
+                {loading ? 'Disconnecting...' : 'Disconnect'}
               </Button>
             </div>
           </div>
@@ -87,20 +84,18 @@ const GoogleAuthForm = ({ serviceName, serviceIcon, onSuccess }: GoogleAuthFormP
           {serviceIcon}
           Connect to {serviceName}
         </CardTitle>
-        <CardDescription>
-          Sign in with your Google account to access {serviceName}.
-        </CardDescription>
+        <CardDescription>Sign in with your Google account to access {serviceName}.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button 
+        <Button
           className="w-full bg-clergy-primary hover:bg-clergy-primary/90 mt-4"
           onClick={handleConnect}
           disabled={loading} // Disable button while signing in
         >
-          {loading ? "Connecting..." : `Sign in with Google`}
+          {loading ? 'Connecting...' : `Sign in with Google`}
         </Button>
         <p className="text-xs text-muted-foreground text-center">
-            You will be prompted to sign in via a Google popup.
+          You will be prompted to sign in via a Google popup.
         </p>
       </CardContent>
     </Card>

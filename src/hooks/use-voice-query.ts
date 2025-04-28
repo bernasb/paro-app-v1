@@ -1,5 +1,4 @@
-
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 export function useVoiceQuery(onQuery: (query: string) => void, deps: any[] = []) {
   useEffect(() => {
@@ -14,10 +13,10 @@ export function useVoiceQuery(onQuery: (query: string) => void, deps: any[] = []
     };
 
     window.addEventListener('voiceQueryReceived', handleVoiceQuery as EventListener);
-    
+
     return () => {
       window.removeEventListener('voiceQueryReceived', handleVoiceQuery as EventListener);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps]);
 }

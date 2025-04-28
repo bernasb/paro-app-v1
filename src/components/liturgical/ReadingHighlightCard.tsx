@@ -1,8 +1,8 @@
 // src/components/liturgical/ReadingHighlightCard.tsx
 
-import { LiturgicalReading } from "@/types/liturgical";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Book } from "lucide-react";
+import { LiturgicalReading } from '@/types/liturgical';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Book } from 'lucide-react';
 import { formatReadingContent } from '@/utils/formattingUtils'; // Only need this for summary formatting
 
 interface ReadingHighlightCardProps {

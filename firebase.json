@@ -3,27 +3,14 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "functions": [
-    {
-      "source": "functions-python",
-      "runtime": "python312",
-      "codebase": "default",
-      "ignore": [
-        "venv",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
-    }
-  ],
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "ignore": [".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"]
+  },
   "hosting": {
     "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",

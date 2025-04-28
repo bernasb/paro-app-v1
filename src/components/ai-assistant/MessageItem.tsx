@@ -1,8 +1,8 @@
-import { User, Bot, BookOpen, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { User, Bot, BookOpen, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ReactMarkdown from 'react-markdown';
-import { Message } from "@/types/ai-assistant";
+import { Message } from '@/types/ai-assistant';
 
 interface MessageItemProps {
   message: Message;
@@ -10,7 +10,6 @@ interface MessageItemProps {
 }
 
 export const MessageItem = ({ message, onRelatedQuestionClick }: MessageItemProps) => {
-  
   // Clean the content: Use slightly more lenient regex to catch optional leading space
   const markdownComponents = {
     p: ({ node, ...props }) => <p className="text-sm whitespace-pre-wrap mb-2" {...props} />,
@@ -26,62 +25,55 @@ export const MessageItem = ({ message, onRelatedQuestionClick }: MessageItemProp
     // Add more components here for other Markdown elements as needed (e.g., h1, h2, ul, li, etc.)
   };
   const cleanedContent =
-
-    !message.isLoading && message.content 
+    !message.isLoading && message.content
       ? message.content.replace(/\s?\[\^\d+\]/g, '').trim() // Regex updated here
-      : message.content; 
+      : message.content;
 
   return (
     <div className="space-y-2">
-      <div 
-        className={`flex gap-3 ${ 
-          message.role === "user" ? "justify-end" : "justify-start"
-        }`}
-      >
+      <div className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
         {/* Assistant Icon */}
-        {message.role === "assistant" && (
+        {message.role === 'assistant' && (
           <div className="w-8 h-8 rounded-full bg-clergy-primary flex items-center justify-center flex-shrink-0">
             <Bot className="h-4 w-4 text-white" />
           </div>
         )}
-        
+
         {/* Message Bubble */}
-        <div 
-          className={`max-w-[60%] p-3 rounded-lg ${ 
-            message.role === "user" 
-              ? "bg-clergy-primary text-primary-foreground" 
-              : "bg-accent"
+        <div
+          className={`max-w-[60%] p-3 rounded-lg ${
+            message.role === 'user' ? 'bg-clergy-primary text-primary-foreground' : 'bg-accent'
           }`}
         >
           {/* Display loading or cleaned content */}
           {message.isLoading ? (
             <div className="flex items-center justify-center text-sm text-muted-foreground">
-               <Loader2 className="h-4 w-4 animate-spin mr-2" /> 
-               Thinking...
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Thinking...
             </div>
           ) : (
             <ReactMarkdown components={markdownComponents}>{cleanedContent}</ReactMarkdown>
           )}
 
           {/* Timestamp (hide if loading) */}
-          {!message.isLoading && ( 
-              <div className="text-xs opacity-70 mt-1">
-                {message.timestamp.toLocaleTimeString([], { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </div>
+          {!message.isLoading && (
+            <div className="text-xs opacity-70 mt-1">
+              {message.timestamp.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </div>
           )}
         </div>
-        
+
         {/* User Icon */}
-        {message.role === "user" && (
+        {message.role === 'user' && (
           <div className="w-8 h-8 rounded-full bg-clergy-secondary flex items-center justify-center flex-shrink-0">
             <User className="h-4 w-4 text-white" />
           </div>
         )}
       </div>
-      
+
       {/* Citations (only show if not loading) */}
       {!message.isLoading && message.citations && message.citations.length > 0 && (
         <Collapsible>
@@ -96,11 +88,11 @@ export const MessageItem = ({ message, onRelatedQuestionClick }: MessageItemProp
           </CollapsibleContent>
         </Collapsible>
       )}
-      
+
       {/* Related Questions (only show if not loading) */}
       {!message.isLoading && message.relatedQuestions && message.relatedQuestions.length > 0 && (
-        <RelatedQuestions 
-          questions={message.relatedQuestions} 
+        <RelatedQuestions
+          questions={message.relatedQuestions}
           onQuestionClick={onRelatedQuestionClick}
         />
       )}
@@ -110,12 +102,12 @@ export const MessageItem = ({ message, onRelatedQuestionClick }: MessageItemProp
 
 // --- CitationsDisplay and RelatedQuestions components remain the same ---
 interface CitationsDisplayProps {
-  citations: Message["citations"];
+  citations: Message['citations'];
 }
 
 const CitationsDisplay = ({ citations }: CitationsDisplayProps) => {
   if (!citations || citations.length === 0) return null;
-  
+
   return (
     <div className="mt-2 p-3 bg-muted rounded-md text-sm max-w-[60%]">
       <h4 className="font-semibold flex items-center gap-1 mb-2">
@@ -147,16 +139,16 @@ interface RelatedQuestionsProps {
 
 const RelatedQuestions = ({ questions, onQuestionClick }: RelatedQuestionsProps) => {
   if (!questions || questions.length === 0) return null;
-  
+
   return (
     <div className="ml-11 mt-2">
       <h4 className="text-sm font-semibold mb-2">Related Questions</h4>
       <div className="flex flex-wrap gap-2">
         {questions.map((question, index) => (
-          <Button 
-            key={index} 
-            variant="outline" 
-            size="sm" 
+          <Button
+            key={index}
+            variant="outline"
+            size="sm"
             className="text-xs"
             onClick={() => onQuestionClick(question)}
           >

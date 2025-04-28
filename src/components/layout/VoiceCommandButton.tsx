@@ -1,22 +1,16 @@
-
-import { Mic, MicOff, Radio } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useVoice } from "@/contexts/VoiceContext";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
+import { Mic, MicOff, Radio } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useVoice } from '@/contexts/VoiceContext';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function VoiceCommandButton() {
-  const { 
-    isListening, 
+  const {
+    isListening,
     // isProcessing, // isProcessing seems unused here, maybe remove?
-    startListening, 
-    stopListening, 
-    isWakeWordEnabled, 
-    toggleWakeWord // Correct function name from context
+    startListening,
+    stopListening,
+    isWakeWordEnabled,
+    toggleWakeWord, // Correct function name from context
   } = useVoice();
 
   const toggleVoiceCommand = () => {
@@ -28,10 +22,10 @@ export function VoiceCommandButton() {
     }
   };
 
-  let ButtonIcon = isListening ? MicOff : Mic;
-  let buttonText = isListening ? "Stop Listening" : "Voice Command";
-  let buttonVariant: "default" | "outline" | "destructive" = isListening ? "default" : "outline";
-  let additionalClasses = isListening ? "animate-pulse-light bg-clergy-primary" : "";
+  const ButtonIcon = isListening ? MicOff : Mic;
+  const buttonText = isListening ? 'Stop Listening' : 'Voice Command';
+  const buttonVariant: 'default' | 'outline' | 'destructive' = isListening ? 'default' : 'outline';
+  const additionalClasses = isListening ? 'animate-pulse-light bg-clergy-primary' : '';
 
   return (
     <div className="flex items-center gap-2">
@@ -39,10 +33,10 @@ export function VoiceCommandButton() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={isWakeWordEnabled ? "default" : "outline"}
+              variant={isWakeWordEnabled ? 'default' : 'outline'}
               size="icon"
               onClick={toggleWakeWord} // Call the correct function
-              className={`${isWakeWordEnabled ? "bg-clergy-primary" : ""}`}
+              className={`${isWakeWordEnabled ? 'bg-clergy-primary' : ''}`}
             >
               <Radio size={18} />
             </Button>
@@ -52,11 +46,11 @@ export function VoiceCommandButton() {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      
+
       <Button
         variant={buttonVariant}
         onClick={toggleVoiceCommand}
-        className={cn("gap-2", additionalClasses)}
+        className={cn('gap-2', additionalClasses)}
         // disabled={isProcessing} // Consider if this is needed based on context changes
       >
         <ButtonIcon size={18} />
@@ -68,9 +62,9 @@ export function VoiceCommandButton() {
 
 // Import cn helper function from utils
 // Assuming cn is defined elsewhere or imported properly in the actual project
-import { clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
- 
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
 export function cn(...inputs: unknown[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }

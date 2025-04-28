@@ -44,9 +44,11 @@ All backend endpoints are Firebase Callable Functions:
 ## Deployment
 
 Deploy using Firebase CLI:
+
 ```bash
 firebase deploy --only functions
 ```
 
 ---
+
 For more details, see the main project README and `/docs/api` for API documentation.

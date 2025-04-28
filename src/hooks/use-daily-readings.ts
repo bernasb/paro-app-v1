@@ -17,11 +17,11 @@ function removeCharacterCounts(text: string | undefined): string | undefined {
 }
 
 // Clean all existing cache entries
-Object.keys(readingsCache).forEach(key => {
+Object.keys(readingsCache).forEach((key) => {
   if (readingsCache[key] && Array.isArray(readingsCache[key])) {
-    readingsCache[key] = readingsCache[key].map(reading => ({
+    readingsCache[key] = readingsCache[key].map((reading) => ({
       ...reading,
-      summary: removeCharacterCounts(reading.summary)
+      summary: removeCharacterCounts(reading.summary),
     }));
   }
 });
@@ -49,7 +49,10 @@ function extractAndParseJson(contentString: string | undefined, expectedType: 'a
     }
   }
   if (endIndex === -1) {
-    console.error(`Could not find matching end character '${endChar}' for structure starting at index ${startIndex}:`, contentString);
+    console.error(
+      `Could not find matching end character '${endChar}' for structure starting at index ${startIndex}:`,
+      contentString,
+    );
     throw new Error(`Could not find complete ${expectedType} structure in AI response.`);
   }
   const jsonSubstring = contentString.substring(startIndex, endIndex + 1);
@@ -58,18 +61,20 @@ function extractAndParseJson(contentString: string | undefined, expectedType: 'a
     if (expectedType === 'array' && !Array.isArray(parsedData)) {
       throw new Error('Parsed data was not an array.');
     }
-    if (expectedType === 'object' && (typeof parsedData !== 'object' || parsedData === null || Array.isArray(parsedData))) {
+    if (
+      expectedType === 'object' &&
+      (typeof parsedData !== 'object' || parsedData === null || Array.isArray(parsedData))
+    ) {
       throw new Error('Parsed data was not an object.');
     }
     return parsedData;
   } catch (parseError) {
     console.error(`Failed to parse extracted JSON ${expectedType}:`, parseError);
-    console.error("Extracted substring that failed parsing:", jsonSubstring);
-    let message = parseError instanceof Error ? parseError.message : "Unknown parse error";
+    console.error('Extracted substring that failed parsing:', jsonSubstring);
+    const message = parseError instanceof Error ? parseError.message : 'Unknown parse error';
     throw new Error('Failed to parse extracted AI data: ' + message);
   }
 }
-
 
 export function useDailyReadings(date: Date | undefined) {
   const [readings, setReadings] = useState<LiturgicalReading[]>([]);
@@ -79,7 +84,7 @@ export function useDailyReadings(date: Date | undefined) {
   useEffect(() => {
     if (!date) {
       setReadings([]);
-      setError("Please select a date.");
+      setError('Please select a date.');
       return;
     }
 
@@ -103,11 +108,11 @@ export function useDailyReadings(date: Date | undefined) {
 
       const messages: MagisteriumMessage[] = [
         {
-          role: "system",
-          content: `You are a Catholic API endpoint that returns JSON. Respond ONLY with the valid JSON array requested. ABSOLUTELY NO introductory text, explanations, markdown formatting, character or word counts, or anything other than the JSON itself. Your entire response MUST start with '[' and end with ']'. Do not wrap the JSON in markdown code blocks. The JSON array should contain objects matching the LiturgicalReading interface: { title: string; citation: string; content: string; summary?: string; }. Ensure 'content' contains the full text of the reading and 'summary' is a concise 1-2 sentence overview. Include First Reading, Responsorial Psalm, Second Reading (if applicable), Gospel Acclamation. and Gospel.`
+          role: 'system',
+          content: `You are a Catholic API endpoint that returns JSON. Respond ONLY with the valid JSON array requested. ABSOLUTELY NO introductory text, explanations, markdown formatting, character or word counts, or anything other than the JSON itself. Your entire response MUST start with '[' and end with ']'. Do not wrap the JSON in markdown code blocks. The JSON array should contain objects matching the LiturgicalReading interface: { title: string; citation: string; content: string; summary?: string; }. Ensure 'content' contains the full text of the reading and 'summary' is a concise 1-2 sentence overview. Include First Reading, Responsorial Psalm, Second Reading (if applicable), Gospel Acclamation. and Gospel.`,
         },
         {
-          role: "user",
+          role: 'user',
           content: `
             Provide the Catholic Mass readings (First Reading, Responsorial Psalm, Second Reading (if present), Gospel Acclamation, and Gospel) for the date ${dateString}.
             For each reading, include:
@@ -117,8 +122,8 @@ export function useDailyReadings(date: Date | undefined) {
 
             Format the entire response as a single, valid JSON array of objects, where each object represents one reading.
             Ensure the JSON is valid and contains only the array.
-          `
-        }
+          `,
+        },
       ];
 
       try {
@@ -133,50 +138,50 @@ export function useDailyReadings(date: Date | undefined) {
         const contentString = response?.content;
 
         if (contentString && typeof contentString === 'string') {
-           // Attempt to parse the JSON string from the content
-           parsedReadings = extractAndParseJson(contentString, 'array');
+          // Attempt to parse the JSON string from the content
+          parsedReadings = extractAndParseJson(contentString, 'array');
         } else {
-           // Handle cases where the response is null or content is missing/invalid
-           console.error("AI response content missing, invalid, or null:", response);
-           // Throw error only if response wasn't explicitly null (which indicates sendRequest handled the error)
-           if (response !== null) {
-               throw new Error("Received invalid or missing content from AI.");
-           } else {
-               // If response is null, sendRequest already showed a toast, just return
-               return;
-           }
+          // Handle cases where the response is null or content is missing/invalid
+          console.error('AI response content missing, invalid, or null:', response);
+          // Throw error only if response wasn't explicitly null (which indicates sendRequest handled the error)
+          if (response !== null) {
+            throw new Error('Received invalid or missing content from AI.');
+          } else {
+            // If response is null, sendRequest already showed a toast, just return
+            return;
+          }
         }
 
-
         // Basic validation
-        if (!Array.isArray(parsedReadings) || parsedReadings.some(r => !r.title || !r.citation || !r.content)) {
-          console.error("Parsed data is not a valid array of LiturgicalReading:", parsedReadings);
-          throw new Error("Received invalid reading data structure from AI.");
+        if (
+          !Array.isArray(parsedReadings) ||
+          parsedReadings.some((r) => !r.title || !r.citation || !r.content)
+        ) {
+          console.error('Parsed data is not a valid array of LiturgicalReading:', parsedReadings);
+          throw new Error('Received invalid reading data structure from AI.');
         }
 
         // Clean up character counts from summaries
-        const cleanedReadings = parsedReadings.map(reading => ({
+        const cleanedReadings = parsedReadings.map((reading) => ({
           ...reading,
-          summary: removeCharacterCounts(reading.summary)
+          summary: removeCharacterCounts(reading.summary),
         }));
 
-        console.log("Mapped readings from Magisterium via hook:", cleanedReadings);
+        console.log('Mapped readings from Magisterium via hook:', cleanedReadings);
         readingsCache[cacheKey] = cleanedReadings; // Update cache
         setReadings(cleanedReadings);
-
       } catch (err: unknown) {
-        let errorMessage = "Failed to fetch readings via API hook.";
+        let errorMessage = 'Failed to fetch readings via API hook.';
         if (err instanceof Error) {
           errorMessage = err.message;
         }
-        console.error("Error in useDailyReadings hook:", err);
+        console.error('Error in useDailyReadings hook:', err);
         setError(errorMessage);
         setReadings([]); // Clear readings on error
       }
     };
 
     fetchReadings();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, sendRequest]); // Add sendRequest to dependency array
 
   // Return loading state from useMagisteriumApi

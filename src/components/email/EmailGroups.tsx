@@ -1,13 +1,18 @@
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Plus, Users, UserPlus, X, Save, Mail } from "lucide-react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Users, UserPlus, X, Save, Mail } from 'lucide-react';
 
 type EmailGroup = {
   id: string;
@@ -21,34 +26,34 @@ type EmailGroupsProps = {
 
 export function EmailGroups({ onSelectGroup }: EmailGroupsProps) {
   const [groups, setGroups] = useState<EmailGroup[]>([
-    { id: "1", name: "Parish Staff", emails: ["staff1@example.com", "staff2@example.com"] },
-    { id: "2", name: "Pastoral Council", emails: ["council1@example.com", "council2@example.com"] },
+    { id: '1', name: 'Parish Staff', emails: ['staff1@example.com', 'staff2@example.com'] },
+    { id: '2', name: 'Pastoral Council', emails: ['council1@example.com', 'council2@example.com'] },
   ]);
-  const [newGroupName, setNewGroupName] = useState("");
-  const [newGroupEmails, setNewGroupEmails] = useState("");
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupEmails, setNewGroupEmails] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAddGroup = () => {
     if (!newGroupName) {
       toast({
-        title: "Group name required",
-        description: "Please provide a name for the group.",
-        variant: "destructive",
+        title: 'Group name required',
+        description: 'Please provide a name for the group.',
+        variant: 'destructive',
       });
       return;
     }
 
     const emails = newGroupEmails
-      .split(",")
+      .split(',')
       .map((email) => email.trim())
       .filter((email) => email.length > 0);
 
     if (emails.length === 0) {
       toast({
-        title: "Emails required",
-        description: "Please add at least one email address.",
-        variant: "destructive",
+        title: 'Emails required',
+        description: 'Please add at least one email address.',
+        variant: 'destructive',
       });
       return;
     }
@@ -60,12 +65,12 @@ export function EmailGroups({ onSelectGroup }: EmailGroupsProps) {
     };
 
     setGroups([...groups, newGroup]);
-    setNewGroupName("");
-    setNewGroupEmails("");
+    setNewGroupName('');
+    setNewGroupEmails('');
     setIsDialogOpen(false);
 
     toast({
-      title: "Group created",
+      title: 'Group created',
       description: `${newGroupName} has been added to your groups.`,
     });
   };
@@ -137,12 +142,10 @@ export function EmailGroups({ onSelectGroup }: EmailGroupsProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">{group.name}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {group.emails.length} recipients
-                  </p>
+                  <p className="text-xs text-muted-foreground">{group.emails.length} recipients</p>
                 </div>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="ghost"
                   onClick={() => handleSelectGroup(group)}
                   className="gap-1"

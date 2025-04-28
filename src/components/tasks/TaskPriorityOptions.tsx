@@ -1,6 +1,5 @@
-
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 interface TaskPriorityOptionsProps {
   completed: boolean;
@@ -22,36 +21,30 @@ export const TaskPriorityOptions = ({
   return (
     <div className="flex flex-col gap-3 mt-2">
       <div className="flex items-center gap-2">
-        <Checkbox 
-          id="completed" 
+        <Checkbox
+          id="completed"
           checked={completed}
-          onCheckedChange={(checked) => 
-            onCompletedChange(checked === true)
-          }
+          onCheckedChange={(checked) => onCompletedChange(checked === true)}
         />
         <Label htmlFor="completed">Completed</Label>
       </div>
-      
+
       <div className="flex items-center gap-2">
-        <Checkbox 
-          id="urgent" 
+        <Checkbox
+          id="urgent"
           checked={urgent}
           className="data-[state=checked]:bg-destructive"
-          onCheckedChange={(checked) => 
-            onUrgentChange(checked === true)
-          }
+          onCheckedChange={(checked) => onUrgentChange(checked === true)}
         />
         <Label htmlFor="urgent">Urgent</Label>
       </div>
-      
+
       <div className="flex items-center gap-2">
-        <Checkbox 
-          id="important" 
+        <Checkbox
+          id="important"
           checked={important}
           className="data-[state=checked]:bg-clergy-secondary"
-          onCheckedChange={(checked) => 
-            onImportantChange(checked === true)
-          }
+          onCheckedChange={(checked) => onImportantChange(checked === true)}
         />
         <Label htmlFor="important">Important</Label>
       </div>

@@ -1,10 +1,9 @@
-
-import { Outlet } from "react-router-dom";
-import AppSidebar from "./AppSidebar";
-import { VoiceCommandButton } from "./VoiceCommandButton";
-import { Toaster } from "@/components/ui/toaster";
-import { VoiceProvider } from "@/contexts/VoiceContext";
-import { VoiceIndicator } from "@/components/voice/VoiceIndicator";
+import { Outlet } from 'react-router-dom';
+import AppSidebar from './AppSidebar';
+import { VoiceCommandButton } from './VoiceCommandButton';
+import { Toaster } from '@/components/ui/toaster';
+import { VoiceProvider } from '@/contexts/VoiceContext';
+import { VoiceIndicator } from '@/components/voice/VoiceIndicator';
 
 export default function MainLayout() {
   return (

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react"; // Add useEffect
-import { Mic, SendHorizonal } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useVoice } from "@/contexts/VoiceContext";
-import { useGoogleAuth } from "@/contexts/GoogleAuthContext"; // Import the auth hook
+import React, { useState, useEffect } from 'react'; // Add useEffect
+import { Mic, SendHorizonal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { useVoice } from '@/contexts/VoiceContext';
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext'; // Import the auth hook
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
@@ -11,7 +11,7 @@ interface MessageInputProps {
 }
 
 export const MessageInput = ({ onSendMessage, isProcessing }: MessageInputProps) => {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const { isListening, startListening } = useVoice();
   const { isAuthenticated, loading: authLoading } = useGoogleAuth(); // Get auth state
 
@@ -24,7 +24,7 @@ export const MessageInput = ({ onSendMessage, isProcessing }: MessageInputProps)
       return;
     }
     onSendMessage(input);
-    setInput("");
+    setInput('');
   };
 
   const toggleVoiceInput = () => {
@@ -35,9 +35,9 @@ export const MessageInput = ({ onSendMessage, isProcessing }: MessageInputProps)
   return (
     <div className="flex gap-2">
       <Button
-        variant={isListening ? "default" : "outline"}
+        variant={isListening ? 'default' : 'outline'}
         size="icon"
-        className={`flex-shrink-0 ${isListening ? "animate-pulse-light bg-clergy-primary" : ""}`}
+        className={`flex-shrink-0 ${isListening ? 'animate-pulse-light bg-clergy-primary' : ''}`}
         onClick={toggleVoiceInput}
         disabled={isDisabled} // Disable voice button too
       >
@@ -48,14 +48,14 @@ export const MessageInput = ({ onSendMessage, isProcessing }: MessageInputProps)
         onChange={(e) => setInput(e.target.value)}
         placeholder={
           authLoading
-            ? "Authenticating..."
+            ? 'Authenticating...'
             : !isAuthenticated
-            ? "Please sign in to chat"
-            : "Type your message..."
+              ? 'Please sign in to chat'
+              : 'Type your message...'
         } // Update placeholder based on auth state
         className="min-h-[80px]"
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
+          if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
           }

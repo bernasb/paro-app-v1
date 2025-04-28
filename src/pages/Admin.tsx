@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
@@ -7,8 +14,24 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle, RefreshCw, Calendar as CalendarIcon, Trash2, BarChart3, Cross, Save, Plus, Edit, X } from 'lucide-react';
-import { clearCache, getCacheStats, preFetchReadingsForDate } from '@/services/liturgical/readingSummariesCache';
+import {
+  AlertCircle,
+  CheckCircle,
+  RefreshCw,
+  Calendar as CalendarIcon,
+  Trash2,
+  BarChart3,
+  Cross,
+  Save,
+  Plus,
+  Edit,
+  X,
+} from 'lucide-react';
+import {
+  clearCache,
+  getCacheStats,
+  preFetchReadingsForDate,
+} from '@/services/liturgical/readingSummariesCache';
 import { getDailyMassReadings, getReadingSummary } from '@/services/liturgical/liturgicalService';
 import { collection, doc, getDocs, setDoc, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/integrations/firebase/client';
@@ -30,11 +53,14 @@ const Admin = () => {
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [savingFeed, setSavingFeed] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
-  
+
   // State for cache operations
   const [clearingCache, setClearingCache] = useState(false);
-  const [clearCacheResult, setClearCacheResult] = useState<{ success: boolean; message: string } | null>(null);
-  
+  const [clearCacheResult, setClearCacheResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+
   // State for cache statistics
   const [cacheStats, setCacheStats] = useState<{
     totalDocuments: number;
@@ -43,39 +69,42 @@ const Admin = () => {
     mostAccessed?: { id: string; fetchCount: number };
   } | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
-  
+
   // State for pre-fetching
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    new Date(new Date().setDate(new Date().getDate() + 1)) // Default to tomorrow
+    new Date(new Date().setDate(new Date().getDate() + 1)), // Default to tomorrow
   );
   const [prefetching, setPrefetching] = useState(false);
-  const [prefetchResult, setPrefetchResult] = useState<{ success: boolean; message: string } | null>(null);
-  
+  const [prefetchResult, setPrefetchResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+
   // Load cache statistics and RSS feeds on component mount
   useEffect(() => {
     loadCacheStats();
     loadRSSFeeds();
   }, []);
-  
+
   // Function to load RSS feeds from Firestore
   const loadRSSFeeds = async () => {
     setLoadingFeeds(true);
     setFeedError(null);
-    
+
     try {
       const feedsCollection = collection(db, 'rssFeeds');
       const feedsSnapshot = await getDocs(feedsCollection);
-      
+
       const feeds: RSSFeed[] = [];
       feedsSnapshot.forEach((doc) => {
         const data = doc.data();
         feeds.push({
           id: doc.id,
           name: data.name,
-          url: data.url
+          url: data.url,
         });
       });
-      
+
       setRssFeeds(feeds);
     } catch (error) {
       console.error('Error loading RSS feeds:', error);
@@ -84,14 +113,14 @@ const Admin = () => {
       setLoadingFeeds(false);
     }
   };
-  
+
   // Function to save a new RSS feed
   const handleSaveFeed = async () => {
     if (!newFeedName.trim() || !newFeedUrl.trim()) {
       setFeedError('Please provide both a name and URL for the feed.');
       return;
     }
-    
+
     // Basic URL validation
     try {
       new URL(newFeedUrl);
@@ -99,51 +128,53 @@ const Admin = () => {
       setFeedError('Please enter a valid URL including http:// or https://');
       return;
     }
-    
+
     // Check if we already have 3 feeds
     if (rssFeeds.length >= 3 && !editingFeed) {
       setFeedError('Maximum of 3 RSS feeds allowed. Please remove one to add another.');
       return;
     }
-    
+
     setSavingFeed(true);
     setFeedError(null);
-    
+
     try {
       if (editingFeed) {
         // Update existing feed
         await setDoc(doc(db, 'rssFeeds', editingFeed.id), {
           name: newFeedName,
-          url: newFeedUrl
+          url: newFeedUrl,
         });
-        
+
         // Update local state
-        setRssFeeds(prev => prev.map(feed => 
-          feed.id === editingFeed.id 
-            ? { ...feed, name: newFeedName, url: newFeedUrl } 
-            : feed
-        ));
-        
+        setRssFeeds((prev) =>
+          prev.map((feed) =>
+            feed.id === editingFeed.id ? { ...feed, name: newFeedName, url: newFeedUrl } : feed,
+          ),
+        );
+
         setEditingFeed(null);
       } else {
         // Add new feed
         const docRef = await addDoc(collection(db, 'rssFeeds'), {
           name: newFeedName,
-          url: newFeedUrl
+          url: newFeedUrl,
         });
-        
+
         // Update local state
-        setRssFeeds(prev => [...prev, {
-          id: docRef.id,
-          name: newFeedName,
-          url: newFeedUrl
-        }]);
+        setRssFeeds((prev) => [
+          ...prev,
+          {
+            id: docRef.id,
+            name: newFeedName,
+            url: newFeedUrl,
+          },
+        ]);
       }
-      
+
       // Reset form
       setNewFeedName('');
       setNewFeedUrl('');
-      
     } catch (error) {
       console.error('Error saving RSS feed:', error);
       setFeedError('Failed to save RSS feed. Please try again.');
@@ -151,15 +182,15 @@ const Admin = () => {
       setSavingFeed(false);
     }
   };
-  
+
   // Function to delete an RSS feed
   const handleDeleteFeed = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'rssFeeds', id));
-      
+
       // Update local state
-      setRssFeeds(prev => prev.filter(feed => feed.id !== id));
-      
+      setRssFeeds((prev) => prev.filter((feed) => feed.id !== id));
+
       // If we were editing this feed, reset the form
       if (editingFeed && editingFeed.id === id) {
         setEditingFeed(null);
@@ -171,21 +202,21 @@ const Admin = () => {
       setFeedError('Failed to delete RSS feed. Please try again.');
     }
   };
-  
+
   // Function to start editing a feed
   const handleEditFeed = (feed: RSSFeed) => {
     setEditingFeed(feed);
     setNewFeedName(feed.name);
     setNewFeedUrl(feed.url);
   };
-  
+
   // Function to cancel editing
   const handleCancelEdit = () => {
     setEditingFeed(null);
     setNewFeedName('');
     setNewFeedUrl('');
   };
-  
+
   // Function to load cache statistics
   const loadCacheStats = async () => {
     setLoadingStats(true);
@@ -198,74 +229,74 @@ const Admin = () => {
       setLoadingStats(false);
     }
   };
-  
+
   // Function to clear the cache
   const handleClearCache = async () => {
     setClearingCache(true);
     setClearCacheResult(null);
-    
+
     try {
       const deletedCount = await clearCache();
       setClearCacheResult({
         success: true,
-        message: `Successfully cleared ${deletedCount} documents from the cache.`
+        message: `Successfully cleared ${deletedCount} documents from the cache.`,
       });
-      
+
       // Refresh cache statistics
       await loadCacheStats();
     } catch (error) {
       console.error('Error clearing cache:', error);
       setClearCacheResult({
         success: false,
-        message: `Error clearing cache: ${error instanceof Error ? error.message : String(error)}`
+        message: `Error clearing cache: ${error instanceof Error ? error.message : String(error)}`,
       });
     } finally {
       setClearingCache(false);
     }
   };
-  
+
   // Function to pre-fetch readings for a date
   const handlePreFetch = async () => {
     if (!selectedDate) {
       setPrefetchResult({
         success: false,
-        message: 'Please select a date to pre-fetch readings for.'
+        message: 'Please select a date to pre-fetch readings for.',
       });
       return;
     }
-    
+
     setPrefetching(true);
     setPrefetchResult(null);
-    
+
     try {
       const successCount = await preFetchReadingsForDate(
         selectedDate,
         getDailyMassReadings,
-        getReadingSummary
+        getReadingSummary,
       );
-      
+
       setPrefetchResult({
         success: true,
-        message: `Successfully pre-fetched ${successCount} readings for ${selectedDate.toLocaleDateString()}.`
+        message: `Successfully pre-fetched ${successCount} readings for ${selectedDate.toLocaleDateString()}.`,
       });
-      
+
       // Refresh cache statistics
       await loadCacheStats();
     } catch (error) {
       console.error('Error pre-fetching readings:', error);
       setPrefetchResult({
         success: false,
-        message: `Error pre-fetching readings: ${error instanceof Error ? error.message : String(error)}`
+        message: `Error pre-fetching readings: ${error instanceof Error ? error.message : String(error)}`,
       });
     } finally {
       setPrefetching(false);
     }
   };
-  
+
   return (
     <div className="container py-6">
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-      
+
       <Tabs defaultValue="cache">
         <TabsList className="mb-4">
           <TabsTrigger value="cache">Cache Management</TabsTrigger>
@@ -273,7 +304,7 @@ const Admin = () => {
           <TabsTrigger value="prefetch">Pre-fetch Readings</TabsTrigger>
           <TabsTrigger value="rss">RSS Feeds</TabsTrigger>
         </TabsList>
-        
+
         {/* Cache Management Tab */}
         <TabsContent value="cache">
           <Card>
@@ -286,11 +317,7 @@ const Admin = () => {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleClearCache} 
-                    disabled={clearingCache}
-                  >
+                  <Button variant="destructive" onClick={handleClearCache} disabled={clearingCache}>
                     {clearingCache ? (
                       <>
                         <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -303,12 +330,8 @@ const Admin = () => {
                       </>
                     )}
                   </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    onClick={loadCacheStats} 
-                    disabled={loadingStats}
-                  >
+
+                  <Button variant="outline" onClick={loadCacheStats} disabled={loadingStats}>
                     {loadingStats ? (
                       <>
                         <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -322,23 +345,19 @@ const Admin = () => {
                     )}
                   </Button>
                 </div>
-                
+
                 {clearCacheResult && (
-                  <Alert variant={clearCacheResult.success ? "default" : "destructive"}>
+                  <Alert variant={clearCacheResult.success ? 'default' : 'destructive'}>
                     {clearCacheResult.success ? (
                       <CheckCircle className="h-4 w-4" />
                     ) : (
                       <AlertCircle className="h-4 w-4" />
                     )}
-                    <AlertTitle>
-                      {clearCacheResult.success ? "Success" : "Error"}
-                    </AlertTitle>
-                    <AlertDescription>
-                      {clearCacheResult.message}
-                    </AlertDescription>
+                    <AlertTitle>{clearCacheResult.success ? 'Success' : 'Error'}</AlertTitle>
+                    <AlertDescription>{clearCacheResult.message}</AlertDescription>
                   </Alert>
                 )}
-                
+
                 <div className="mt-4">
                   <h3 className="text-lg font-medium mb-2">Cache Statistics</h3>
                   {loadingStats ? (
@@ -348,31 +367,36 @@ const Admin = () => {
                     </div>
                   ) : cacheStats ? (
                     <div className="space-y-2">
-                      <p><strong>Total Documents:</strong> {cacheStats.totalDocuments}</p>
-                      
+                      <p>
+                        <strong>Total Documents:</strong> {cacheStats.totalDocuments}
+                      </p>
+
                       {cacheStats.oldestDocument && (
                         <p>
-                          <strong>Oldest Document:</strong> {cacheStats.oldestDocument.id.substring(0, 30)}...
+                          <strong>Oldest Document:</strong>{' '}
+                          {cacheStats.oldestDocument.id.substring(0, 30)}...
                           <br />
                           <span className="text-sm text-muted-foreground ml-6">
                             Last Updated: {cacheStats.oldestDocument.lastUpdated.toLocaleString()}
                           </span>
                         </p>
                       )}
-                      
+
                       {cacheStats.newestDocument && (
                         <p>
-                          <strong>Newest Document:</strong> {cacheStats.newestDocument.id.substring(0, 30)}...
+                          <strong>Newest Document:</strong>{' '}
+                          {cacheStats.newestDocument.id.substring(0, 30)}...
                           <br />
                           <span className="text-sm text-muted-foreground ml-6">
                             Last Updated: {cacheStats.newestDocument.lastUpdated.toLocaleString()}
                           </span>
                         </p>
                       )}
-                      
+
                       {cacheStats.mostAccessed && (
                         <p>
-                          <strong>Most Accessed Document:</strong> {cacheStats.mostAccessed.id.substring(0, 30)}...
+                          <strong>Most Accessed Document:</strong>{' '}
+                          {cacheStats.mostAccessed.id.substring(0, 30)}...
                           <br />
                           <span className="text-sm text-muted-foreground ml-6">
                             Fetch Count: {cacheStats.mostAccessed.fetchCount}
@@ -388,7 +412,7 @@ const Admin = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Statistics Tab */}
         <TabsContent value="stats">
           <Card>
@@ -402,10 +426,10 @@ const Admin = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium">Cache Overview</h3>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={loadCacheStats} 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={loadCacheStats}
                     disabled={loadingStats}
                   >
                     {loadingStats ? (
@@ -421,7 +445,7 @@ const Admin = () => {
                     )}
                   </Button>
                 </div>
-                
+
                 {loadingStats ? (
                   <div className="flex items-center justify-center h-40">
                     <RefreshCw className="h-6 w-6 animate-spin mr-2" />
@@ -436,12 +460,10 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold">{cacheStats.totalDocuments}</div>
-                          <p className="text-xs text-muted-foreground">
-                            Cached reading summaries
-                          </p>
+                          <p className="text-xs text-muted-foreground">Cached reading summaries</p>
                         </CardContent>
                       </Card>
-                      
+
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm font-medium">Cache Age</CardTitle>
@@ -450,18 +472,20 @@ const Admin = () => {
                           {cacheStats.oldestDocument ? (
                             <>
                               <div className="text-2xl font-bold">
-                                {Math.floor((Date.now() - cacheStats.oldestDocument.lastUpdated.getTime()) / (1000 * 60 * 60 * 24))} days
+                                {Math.floor(
+                                  (Date.now() - cacheStats.oldestDocument.lastUpdated.getTime()) /
+                                    (1000 * 60 * 60 * 24),
+                                )}{' '}
+                                days
                               </div>
-                              <p className="text-xs text-muted-foreground">
-                                Since oldest document
-                              </p>
+                              <p className="text-xs text-muted-foreground">Since oldest document</p>
                             </>
                           ) : (
                             <div className="text-muted-foreground">No data</div>
                           )}
                         </CardContent>
                       </Card>
-                      
+
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm font-medium">Most Popular</CardTitle>
@@ -482,9 +506,9 @@ const Admin = () => {
                         </CardContent>
                       </Card>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <h3 className="text-lg font-medium mb-4">Recent Documents</h3>
                       {cacheStats.newestDocument ? (
@@ -506,12 +530,7 @@ const Admin = () => {
                   <div className="flex flex-col items-center justify-center h-40">
                     <BarChart3 className="h-10 w-10 text-muted-foreground mb-2" />
                     <p>No statistics available.</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={loadCacheStats} 
-                      className="mt-2"
-                    >
+                    <Button variant="outline" size="sm" onClick={loadCacheStats} className="mt-2">
                       Load Statistics
                     </Button>
                   </div>
@@ -520,7 +539,7 @@ const Admin = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* RSS Feeds Tab */}
         <TabsContent value="rss">
           <Card>
@@ -553,7 +572,7 @@ const Admin = () => {
                           onChange={(e) => setNewFeedName(e.target.value)}
                         />
                       </div>
-                      
+
                       <div className="grid gap-2">
                         <Label htmlFor="feed-url">Feed URL</Label>
                         <Input
@@ -566,7 +585,7 @@ const Admin = () => {
                           Enter the full URL of the RSS feed including http:// or https://
                         </p>
                       </div>
-                      
+
                       {feedError && (
                         <Alert variant="destructive">
                           <AlertCircle className="h-4 w-4" />
@@ -574,17 +593,14 @@ const Admin = () => {
                           <AlertDescription>{feedError}</AlertDescription>
                         </Alert>
                       )}
-                      
+
                       <div className="flex justify-end gap-2">
                         {editingFeed && (
-                          <Button
-                            variant="outline"
-                            onClick={handleCancelEdit}
-                          >
+                          <Button variant="outline" onClick={handleCancelEdit}>
                             Cancel
                           </Button>
                         )}
-                        
+
                         <Button
                           onClick={handleSaveFeed}
                           disabled={savingFeed || !newFeedName || !newFeedUrl}
@@ -610,11 +626,13 @@ const Admin = () => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 {/* List of current feeds */}
                 <div>
-                  <h3 className="text-lg font-medium mb-4">Current RSS Feeds ({rssFeeds.length}/3)</h3>
-                  
+                  <h3 className="text-lg font-medium mb-4">
+                    Current RSS Feeds ({rssFeeds.length}/3)
+                  </h3>
+
                   {loadingFeeds ? (
                     <div className="flex items-center gap-2">
                       <RefreshCw className="h-4 w-4 animate-spin" />
@@ -658,7 +676,7 @@ const Admin = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Pre-fetch Tab */}
         <TabsContent value="prefetch">
           <Card>
@@ -680,7 +698,7 @@ const Admin = () => {
                       className="rounded-md border"
                     />
                   </div>
-                  
+
                   <div className="flex-1">
                     <h3 className="text-lg font-medium mb-2">Pre-fetch Options</h3>
                     <div className="space-y-4">
@@ -688,11 +706,8 @@ const Admin = () => {
                         <p className="text-sm text-muted-foreground mb-2">
                           Selected Date: {selectedDate ? selectedDate.toLocaleDateString() : 'None'}
                         </p>
-                        
-                        <Button 
-                          onClick={handlePreFetch} 
-                          disabled={prefetching || !selectedDate}
-                        >
+
+                        <Button onClick={handlePreFetch} disabled={prefetching || !selectedDate}>
                           {prefetching ? (
                             <>
                               <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -706,46 +721,52 @@ const Admin = () => {
                           )}
                         </Button>
                       </div>
-                      
+
                       {prefetchResult && (
-                        <Alert variant={prefetchResult.success ? "default" : "destructive"}>
+                        <Alert variant={prefetchResult.success ? 'default' : 'destructive'}>
                           {prefetchResult.success ? (
                             <CheckCircle className="h-4 w-4" />
                           ) : (
                             <AlertCircle className="h-4 w-4" />
                           )}
-                          <AlertTitle>
-                            {prefetchResult.success ? "Success" : "Error"}
-                          </AlertTitle>
-                          <AlertDescription>
-                            {prefetchResult.message}
-                          </AlertDescription>
+                          <AlertTitle>{prefetchResult.success ? 'Success' : 'Error'}</AlertTitle>
+                          <AlertDescription>{prefetchResult.message}</AlertDescription>
                         </Alert>
                       )}
-                      
+
                       <div className="mt-4">
                         <h4 className="font-medium mb-2">Quick Actions</h4>
                         <div className="flex flex-wrap gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setSelectedDate(new Date(new Date().setDate(new Date().getDate() + 1)))}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedDate(
+                                new Date(new Date().setDate(new Date().getDate() + 1)),
+                              )
+                            }
                           >
                             Tomorrow
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setSelectedDate(new Date(new Date().setDate(new Date().getDate() + 7)))}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedDate(
+                                new Date(new Date().setDate(new Date().getDate() + 7)),
+                              )
+                            }
                           >
                             Next Week
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => {
                               const nextSunday = new Date();
-                              nextSunday.setDate(nextSunday.getDate() + (7 - nextSunday.getDay()) % 7);
+                              nextSunday.setDate(
+                                nextSunday.getDate() + ((7 - nextSunday.getDay()) % 7),
+                              );
                               setSelectedDate(nextSunday);
                             }}
                           >

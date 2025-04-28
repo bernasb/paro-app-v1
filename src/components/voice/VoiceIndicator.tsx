@@ -1,8 +1,7 @@
-
-import React from "react";
-import { useVoice } from "@/contexts/VoiceContext";
-import { Mic, Loader2, Radio } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from 'react';
+import { useVoice } from '@/contexts/VoiceContext';
+import { Mic, Loader2, Radio } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function VoiceIndicator() {
   const { isListening, isProcessing, transcript, isWakeWordEnabled } = useVoice();
@@ -32,7 +31,7 @@ export function VoiceIndicator() {
           ) : (
             <Loader2 className="h-6 w-6 text-clergy-primary animate-spin" />
           )}
-          
+
           <div className="flex flex-col">
             {isListening ? (
               <span className="text-sm font-medium">Listening...</span>
@@ -40,9 +39,7 @@ export function VoiceIndicator() {
               <span className="text-sm font-medium">Processing command...</span>
             )}
             {transcript && (
-              <span className="text-xs opacity-80 max-w-[200px] truncate">
-                "{transcript}"
-              </span>
+              <span className="text-xs opacity-80 max-w-[200px] truncate">"{transcript}"</span>
             )}
           </div>
         </motion.div>

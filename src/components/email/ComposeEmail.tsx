@@ -1,12 +1,11 @@
-
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { FileEdit, Send, Users } from "lucide-react";
-import { EmailGroups } from "./EmailGroups";
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { FileEdit, Send, Users } from 'lucide-react';
+import { EmailGroups } from './EmailGroups';
 
 interface ComposeEmailProps {
   onSendEmail: () => void;
@@ -15,7 +14,7 @@ interface ComposeEmailProps {
 
 const ComposeEmail = ({ onSendEmail, onCancel }: ComposeEmailProps) => {
   const handleSelectGroup = (group: any) => {
-    console.log("Selected group:", group);
+    console.log('Selected group:', group);
     // You would typically set the recipients here
   };
 
@@ -42,22 +41,26 @@ const ComposeEmail = ({ onSendEmail, onCancel }: ComposeEmailProps) => {
               </Button>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="subject">Subject</Label>
             <Input id="subject" placeholder="Email subject" />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="message">Message</Label>
-            <Textarea id="message" placeholder="Write your message here..." className="min-h-[200px]" />
+            <Textarea
+              id="message"
+              placeholder="Write your message here..."
+              className="min-h-[200px]"
+            />
           </div>
-          
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button 
+            <Button
               className="gap-2 bg-clergy-primary hover:bg-clergy-primary/90"
               onClick={onSendEmail}
             >

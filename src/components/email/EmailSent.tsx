@@ -1,7 +1,6 @@
-
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send } from "lucide-react";
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Send } from 'lucide-react';
 
 const EmailSent = () => {
   return (

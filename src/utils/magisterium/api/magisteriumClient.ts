@@ -1,4 +1,3 @@
-
 import { MagisteriumMessage, MagisteriumResponse } from '../types';
 
 /**
@@ -9,10 +8,10 @@ import { MagisteriumMessage, MagisteriumResponse } from '../types';
 export const sendViaDirectClient = async (
   messages: MagisteriumMessage[],
   apiKey: string,
-  returnRelatedQuestions: boolean = false
+  returnRelatedQuestions: boolean = false,
 ): Promise<MagisteriumResponse> => {
   if (!apiKey) {
-    throw new Error("API key is required for direct Magisterium API access");
+    throw new Error('API key is required for direct Magisterium API access');
   }
 
   try {
@@ -20,25 +19,25 @@ export const sendViaDirectClient = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: 'magisterium-1',
         messages: messages,
-        return_related_questions: returnRelatedQuestions
-      })
+        return_related_questions: returnRelatedQuestions,
+      }),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error("Magisterium API error:", errorData);
+      console.error('Magisterium API error:', errorData);
       throw new Error(`Magisterium API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("Error in direct Magisterium client:", error);
+    console.error('Error in direct Magisterium client:', error);
     throw error;
   }
 };

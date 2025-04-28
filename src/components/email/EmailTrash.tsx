@@ -1,7 +1,6 @@
-
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash } from "lucide-react";
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Trash } from 'lucide-react';
 
 const EmailTrash = () => {
   return (

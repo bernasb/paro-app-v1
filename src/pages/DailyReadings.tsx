@@ -1,23 +1,23 @@
 // DailyReadings.tsx
 
-import { useState, useEffect, useCallback } from "react"; // Added useCallback
-import { ReadingCard } from "@/components/liturgical/ReadingCard";
+import { useState, useEffect, useCallback } from 'react'; // Added useCallback
+import { ReadingCard } from '@/components/liturgical/ReadingCard';
 import { getDailyMassReadings, getReadingSummary } from '@/services/liturgical/liturgicalService';
 import { saveSummaryToCache } from '@/services/liturgical/readingSummariesCache';
-import { LiturgicalReading } from "@/types/liturgical";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LiturgicalReading } from '@/types/liturgical';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 // Removed Firebase httpsCallable imports
 // import { getFunctions, httpsCallable, HttpsCallableResult } from 'firebase/functions';
 // import app from '@/integrations/firebase/client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { Book, Calendar as CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Book, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { useToast } from '@/components/ui/use-toast';
 import pLimit from 'p-limit';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
@@ -53,7 +53,7 @@ const DailyReadings = () => {
       const fetchedReadings = await getDailyMassReadings(date);
       console.log(`Fetched ${fetchedReadings.length} initial readings.`);
       // Log each reading for debugging
-      console.log("Readings received from API:");
+      console.log('Readings received from API:');
       fetchedReadings.forEach((reading, index) => {
         console.log(`Reading ${index + 1}: "${reading.title}" (${reading.citation})`);
       });
@@ -61,7 +61,7 @@ const DailyReadings = () => {
       setLoading(false); // Set loading false after initial fetch
 
       // Asynchronously fetch summaries with limited concurrency for faster loading and less timeout risk
-      console.log("Starting limited-concurrency summary fetching...");
+      console.log('Starting limited-concurrency summary fetching...');
       const limit = pLimit(2); // Change this number to adjust concurrency
 
       // Get Firebase ID token ONCE for all summary requests
@@ -79,7 +79,7 @@ const DailyReadings = () => {
         if (reading.title.toLowerCase().includes('gospel acclamation')) {
           readingsToUpdate[index] = {
             ...reading,
-            summaryLoading: false
+            summaryLoading: false,
           };
         }
       });
@@ -88,8 +88,8 @@ const DailyReadings = () => {
       // Fetch summaries with concurrency limit and update UI as each arrives
       await Promise.all(
         fetchedReadings
-          .filter(reading => !reading.title.toLowerCase().includes('gospel acclamation'))
-          .map(reading =>
+          .filter((reading) => !reading.title.toLowerCase().includes('gospel acclamation'))
+          .map((reading) =>
             limit(async () => {
               try {
                 console.log(`Requesting summary for: ${reading.title}`);
@@ -97,45 +97,47 @@ const DailyReadings = () => {
                 const summaryResult = await getReadingSummary({
                   title: reading.title,
                   citation: reading.citation,
-                  idToken
+                  idToken,
                 });
                 console.log(`Summary received for: ${reading.title}`);
-                setReadings(prevReadings => {
+                setReadings((prevReadings) => {
                   const updatedReadings = [...prevReadings];
-                  const index = updatedReadings.findIndex(r => 
-                    r.title === reading.title && r.citation === reading.citation);
+                  const index = updatedReadings.findIndex(
+                    (r) => r.title === reading.title && r.citation === reading.citation,
+                  );
                   if (index !== -1) {
                     updatedReadings[index] = {
                       ...updatedReadings[index],
                       summary: summaryResult.summary,
                       detailedExplanation: summaryResult.detailedExplanation,
                       summaryLoading: false,
-                      summaryError: undefined
+                      summaryError: undefined,
                     };
                   }
                   return updatedReadings;
                 });
               } catch (summaryError: any) {
                 console.error(`Error fetching summary for ${reading.title}:`, summaryError);
-                setReadings(prevReadings => {
+                setReadings((prevReadings) => {
                   const updatedReadings = [...prevReadings];
-                  const index = updatedReadings.findIndex(r => 
-                    r.title === reading.title && r.citation === reading.citation);
+                  const index = updatedReadings.findIndex(
+                    (r) => r.title === reading.title && r.citation === reading.citation,
+                  );
                   if (index !== -1) {
                     updatedReadings[index] = {
                       ...updatedReadings[index],
                       summaryLoading: false,
-                      summaryError: summaryError.message || 'Failed to load summary.'
+                      summaryError: summaryError.message || 'Failed to load summary.',
                     };
                   }
                   return updatedReadings;
                 });
               }
-            })
-          )
+            }),
+          ),
       );
     } catch (err: any) {
-      console.error("Error fetching daily readings:", err);
+      console.error('Error fetching daily readings:', err);
       setError(err.message || 'Failed to fetch readings.');
       setLoading(false);
     }
@@ -157,56 +159,61 @@ const DailyReadings = () => {
   return (
     // Main container with padding
     <div className="space-y-6 p-4 md:p-6">
-
       {/* Flex container for Calendar Button and Title */}
-      <div className="flex flex-row items-center justify-between mb-4"> {/* Add justify-between back */}
-         {/* Add a title where the old card title was */}
-         <h1 className="text-2xl font-bold flex items-center">
-             <Book className="mr-2 h-6 w-6 text-clergy-primary" />
-             Daily Mass Readings
-         </h1>
-         {/* New div to group buttons */}
-         <div className="flex items-center gap-4"> {/* Change gap-2 to gap-4 */}
-           <Button
+      <div className="flex flex-row items-center justify-between mb-4">
+        {' '}
+        {/* Add justify-between back */}
+        {/* Add a title where the old card title was */}
+        <h1 className="text-2xl font-bold flex items-center">
+          <Book className="mr-2 h-6 w-6 text-clergy-primary" />
+          Daily Mass Readings
+        </h1>
+        {/* New div to group buttons */}
+        <div className="flex items-center gap-4">
+          {' '}
+          {/* Change gap-2 to gap-4 */}
+          <Button
             variant="outline"
-            className={cn("gap-2")} // Keep margins removed
+            className={cn('gap-2')} // Keep margins removed
             onClick={() => {
               const formattedDate = format(selectedDate, 'MMddyy');
               const usccbUrl = `https://bible.usccb.org/bible/readings/${formattedDate}.cfm`;
-              window.open(usccbUrl, "_blank");
+              window.open(usccbUrl, '_blank');
             }}
-           >
+          >
             View Mass Readings
-           </Button>
-           {/* Calendar Popover Button */}
-           <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn( // Remove ml-4
-                    "justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateChange}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-         </div>
+          </Button>
+          {/* Calendar Popover Button */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={'outline'}
+                className={cn(
+                  // Remove ml-4
+                  'justify-start text-left font-normal',
+                  !selectedDate && 'text-muted-foreground',
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateChange}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-       {/* Description - moved outside the flex container */}
-       <p className="text-muted-foreground mb-6">Readings for {format(selectedDate, "EEEE, MMMM d, yyyy")}</p>
-
+      {/* Description - moved outside the flex container */}
+      <p className="text-muted-foreground mb-6">
+        Readings for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+      </p>
 
       {/* Loading State */}
       {loading && (
@@ -225,7 +232,9 @@ const DailyReadings = () => {
           </CardHeader>
           <CardContent>
             <p>{error}</p>
-            <Button onClick={() => fetchReadings(selectedDate)} className="mt-4">Retry</Button>
+            <Button onClick={() => fetchReadings(selectedDate)} className="mt-4">
+              Retry
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -239,7 +248,9 @@ const DailyReadings = () => {
             <TabsTrigger value="all-readings">Readings</TabsTrigger>
           </TabsList>
           */}
-          <TabsContent value="all-readings" className="mt-0"> {/* Added mt-0 */}
+          <TabsContent value="all-readings" className="mt-0">
+            {' '}
+            {/* Added mt-0 */}
             <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
               {readings.length > 0 ? (
                 readings.map((reading, index) => (

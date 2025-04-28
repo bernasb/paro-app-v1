@@ -1,4 +1,3 @@
-
 interface Window {
   SpeechRecognition: typeof SpeechRecognition;
   webkitSpeechRecognition: typeof SpeechRecognition;
@@ -12,12 +11,12 @@ interface SpeechGrammar {
 
 declare var SpeechGrammar: {
   prototype: SpeechGrammar;
-  new(): SpeechGrammar;
+  new (): SpeechGrammar;
 };
 
 declare var SpeechRecognition: {
   prototype: SpeechRecognition;
-  new(): SpeechRecognition;
+  new (): SpeechRecognition;
 };
 
 interface SpeechRecognition extends EventTarget {
@@ -81,5 +80,5 @@ interface SpeechGrammarList {
 
 declare var SpeechGrammarList: {
   prototype: SpeechGrammarList;
-  new(): SpeechGrammarList;
+  new (): SpeechGrammarList;
 };

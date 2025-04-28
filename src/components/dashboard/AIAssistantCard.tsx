@@ -1,16 +1,15 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Mic, MessageSquare } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Mic, MessageSquare } from 'lucide-react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 // Mock data for AI suggestions
 const aiSuggestions = [
-  "Prepare sermon outline for Sunday",
-  "Draft email to Parish Council",
-  "Find prayers for healing service",
-  "Explain Church teaching on social justice",
+  'Prepare sermon outline for Sunday',
+  'Draft email to Parish Council',
+  'Find prayers for healing service',
+  'Explain Church teaching on social justice',
 ];
 
 export function AIAssistantCard() {
@@ -32,7 +31,7 @@ export function AIAssistantCard() {
               key={index}
               variant="outline"
               className={`justify-start text-left h-auto py-2 ${
-                activeIndex === index ? "border-clergy-primary" : ""
+                activeIndex === index ? 'border-clergy-primary' : ''
               }`}
               onClick={() => setActiveIndex(index)}
             >
@@ -43,9 +42,7 @@ export function AIAssistantCard() {
 
         <div className="pt-2">
           <Link to="/ai-assistant" className="w-full block">
-            <Button 
-              className="w-full gap-2 bg-clergy-primary hover:bg-clergy-primary/90"
-            >
+            <Button className="w-full gap-2 bg-clergy-primary hover:bg-clergy-primary/90">
               <Mic className="h-4 w-4" />
               Open Magisterium AI Assistant
             </Button>

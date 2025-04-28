@@ -1,5 +1,5 @@
 // Shared utilities for Firebase Functions
-import * as functions from 'firebase-functions';
+import { CallableRequest } from 'firebase-functions/v2/https';
 
 /**
  * Standardized error response for callable functions
@@ -25,9 +25,8 @@ export function successResponse(data: any) {
 /**
  * Middleware to require Firebase authentication for callable functions
  */
-export function requireAuth(context: functions.https.CallableContext) {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Authentication required.');
+export function requireAuth(request: CallableRequest<any>) {
+  if (!request.auth || !request.auth.uid) {
+    throw new Error('Authentication required');
   }
-  return context.auth;
 }

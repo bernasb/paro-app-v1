@@ -1,11 +1,10 @@
-
-import { useState } from "react";
-import { useGoogleAuth } from "@/contexts/GoogleAuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Clock, MapPin, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import GoogleAuthForm from "@/components/google/GoogleAuthForm";
+import { useState } from 'react';
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar as CalendarIcon, Clock, MapPin, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import GoogleAuthForm from '@/components/google/GoogleAuthForm';
 
 const Calendar = () => {
   const { isAuthenticated } = useGoogleAuth();
@@ -22,11 +21,11 @@ const Calendar = () => {
           </Button>
         )}
       </div>
-      
+
       {!isAuthenticated ? (
-        <GoogleAuthForm 
-          serviceName="Calendar" 
-          serviceIcon={<CalendarIcon className="h-5 w-5 text-clergy-primary" />} 
+        <GoogleAuthForm
+          serviceName="Calendar"
+          serviceIcon={<CalendarIcon className="h-5 w-5 text-clergy-primary" />}
         />
       ) : (
         <>
@@ -44,7 +43,7 @@ const Calendar = () => {
                 />
               </CardContent>
             </Card>
-            
+
             <Card className="lg:col-span-2">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl flex items-center gap-2">
@@ -58,36 +57,36 @@ const Calendar = () => {
                   <CalendarIcon className="h-12 w-12 mb-4 text-muted-foreground/60" />
                   <h3 className="text-xl font-medium mb-2">Calendar Integration</h3>
                   <p className="max-w-md">
-                    Your Google Calendar is connected. In a complete implementation, your events 
+                    Your Google Calendar is connected. In a complete implementation, your events
                     would appear here, synced with your Google account.
                   </p>
                 </div>
               </CardContent>
             </Card>
           </div>
-          
+
           <h2 className="text-xl font-semibold mt-8">Upcoming Events</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               {
                 id: 1,
-                title: "Morning Mass",
-                date: "Today",
-                time: "8:00 AM",
+                title: 'Morning Mass',
+                date: 'Today',
+                time: '8:00 AM',
                 location: "St. Mary's Chapel",
               },
               {
                 id: 2,
-                title: "Youth Group Meeting",
-                date: "Today",
-                time: "4:00 PM",
-                location: "Parish Hall",
+                title: 'Youth Group Meeting',
+                date: 'Today',
+                time: '4:00 PM',
+                location: 'Parish Hall',
               },
               {
                 id: 3,
-                title: "Confession",
-                date: "Tomorrow",
-                time: "3:00 PM",
+                title: 'Confession',
+                date: 'Tomorrow',
+                time: '3:00 PM',
                 location: "St. Mary's Chapel",
               },
             ].map((event) => (

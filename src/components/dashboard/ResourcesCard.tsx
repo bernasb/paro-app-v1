@@ -1,29 +1,28 @@
-
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Radio, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Radio, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Default radio stations
 const defaultRadioStations = [
   {
     id: 1,
-    name: "EWTN Radio",
-    url: "https://ewtn.com/radio/",
+    name: 'EWTN Radio',
+    url: 'https://ewtn.com/radio/',
   },
   {
     id: 2,
-    name: "Relevant Radio",
-    url: "https://relevantradio.com/",
+    name: 'Relevant Radio',
+    url: 'https://relevantradio.com/',
   },
   {
     id: 3,
-    name: "Ave Maria Radio",
-    url: "https://avemariaradio.net/",
+    name: 'Ave Maria Radio',
+    url: 'https://avemariaradio.net/',
   },
 ];
 
-const CUSTOM_STATIONS_KEY = "custom_radio_stations";
+const CUSTOM_STATIONS_KEY = 'custom_radio_stations';
 
 export function ResourcesCard() {
   const [radioStations, setRadioStations] = useState([...defaultRadioStations]);
@@ -59,11 +58,11 @@ export function ResourcesCard() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 gap-3">
           {radioStations.map((station) => (
-            <Button 
-              key={station.id} 
-              variant="outline" 
+            <Button
+              key={station.id}
+              variant="outline"
               className="justify-between h-auto py-3"
-              onClick={() => window.open(station.url, "_blank")}
+              onClick={() => window.open(station.url, '_blank')}
             >
               <span>{station.name}</span>
               <ExternalLink className="h-4 w-4 text-muted-foreground" />
