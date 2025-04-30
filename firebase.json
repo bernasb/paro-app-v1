@@ -9,7 +9,7 @@
     "ignore": [".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"]
   },
   "hosting": {
-    "public": "public",
+    "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {

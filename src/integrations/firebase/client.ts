@@ -31,3 +31,6 @@ export default app;
 // - Use only these exported instances for all Firebase operations in the frontend.
 // - Do NOT use connectFunctionsEmulator unless you are intentionally testing locally.
 // - All Magisterium API calls should go through the magisteriumProxy Cloud Function via Firebase Functions.
+gcloud projects add-iam-policy-binding clergy-connect-idx-ver \
+  --member="serviceAccount:clergy-connect-idx-ver@appspot.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"

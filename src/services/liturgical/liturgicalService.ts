@@ -9,17 +9,12 @@ import { MagisteriumMessage, MagisteriumProxyResponse } from '@/types/magisteriu
 import { LiturgicalReading, LiturgicalEvent } from '@/types/liturgical';
 import { SaintsAndHistoryResult } from '@/types/saints';
 import axios from 'axios';
-import {
-  getSummaryWithCache,
-  cleanSummaryText,
-  getEasterVigilSummary,
-  saveSummaryToCache,
-} from '../shared/readingSummariesCache';
+// import { getSummaryWithCache, cleanSummaryText, getEasterVigilSummary, saveSummaryToCache } from '../shared/readingSummariesCache';
 
 // Cache for readings to reduce API calls
-const readingsCache: Record<string, { readings: LiturgicalReading[]; timestamp: number }> = {}; // Cache enabled
+// const readingsCache: Record<string, { readings: LiturgicalReading[]; timestamp: number }> = {}; // Cache enabled
 // Cache expiration time (24 hours in milliseconds)
-const READINGS_CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000;
+// const READINGS_CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Helper for calling the Magisterium proxy Cloud Function
@@ -255,24 +250,142 @@ function escapeRegExp(string: string): string {
 }
 
 /**
- * Calls the new Firebase Callable Function for daily readings.
- * @param date - The date to get readings for
- * @returns Promise resolving to array of liturgical readings
+ * Fetch daily Mass readings using the Magisterium Proxy (AI Assistant)
  */
-export const getDailyMassReadings = async (date: Date): Promise<LiturgicalReading[]> => {
-  const functions: Functions = getFunctions();
-  const callable = httpsCallable<{ date: string }, any>(functions, 'dailyReadingsProxy');
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  const dateString = `${year}-${month}-${day}`;
-  const result: HttpsCallableResult<any> = await callable({ date: dateString });
-  if (!result.data || result.data.status !== 'success') {
-    throw new Error(result.data?.data || 'Failed to fetch daily readings from callable function');
+export async function getDailyMassReadings(dateString: string): Promise<any[]> {
+  try {
+    const functions = getFunctions();
+    const magisteriumProxy = httpsCallable(functions, 'magisteriumProxy');
+    // Strongly instruct the AI to return only JSON
+    const prompt = `What are the official Catholic Mass readings for ${dateString}? Respond ONLY with a valid JSON array of objects, each with "title" and "citation" fields. For example: [{"title":"First Reading","citation":"Acts 4:32-37"}, ...]. Do NOT include any other text.`;
+    
+    console.log('[getDailyMassReadings] Sending prompt to Magisterium:', prompt);
+    const result = await magisteriumProxy({
+      messages: [
+        { role: 'user', content: prompt }
+      ]
+    });
+
+    // Debug: Log the actual response structure
+    console.log('[getDailyMassReadings] Raw response:', JSON.stringify(result.data, null, 2));
+
+    // Type assertion to avoid TypeScript errors while keeping the flexible access
+    const responseData = result.data as any;
+
+    // Extract content using more flexible access paths
+    let content = '';
+    
+    // Try multiple possible response structures
+    if (responseData?.choices?.[0]?.message?.content) {
+      // Standard OpenAI-like format
+      content = responseData.choices[0].message.content;
+    } else if (typeof responseData?.data === 'string') {
+      // Wrapped in a data property (common in Firebase callable functions)
+      content = responseData.data;
+    } else if (responseData?.data?.choices?.[0]?.message?.content) {
+      // Nested inside data property with OpenAI structure
+      content = responseData.data.choices[0].message.content;
+    } else if (typeof responseData === 'string') {
+      // Direct string response
+      content = responseData;
+    } else {
+      console.error('[getDailyMassReadings] Unexpected response structure:', responseData);
+      throw new Error('Cannot extract content from Magisterium response. See console for details.');
+    }
+
+    console.log('[getDailyMassReadings] Extracted content:', content);
+
+    // Strip any Markdown code block formatting - ensure ALL backticks are removed
+    const cleanedContent = content
+      .replace(/^```(json|javascript|js)?[\s\n]*/i, '') // Remove opening code fence
+      .replace(/[\s\n]*```[\s\n`]*/ig, '') // Remove closing code fence with any extra backticks
+      .trim();
+    console.log('[getDailyMassReadings] Cleaned content for parsing:', cleanedContent);
+
+    try {
+      // Try to parse as JSON first
+      const readings = JSON.parse(cleanedContent);
+      console.log('[getDailyMassReadings] Successfully parsed JSON:', readings);
+      if (!Array.isArray(readings)) throw new Error('Not an array');
+      
+      // Return directly with correct title and citation values
+      return readings.map(reading => ({
+        title: reading.title || '',
+        citation: reading.citation || '',
+        summaryLoading: true,
+        summaryError: undefined
+      }));
+    } catch (jsonErr) {
+      console.log('[getDailyMassReadings] JSON parsing failed, falling back to line parsing. Error:', jsonErr);
+      
+      // Try extracting from the original content directly since we have JSON structure
+      // even if it didn't fully parse
+      const titleRegex = /"title"\s*:\s*"([^"]*)"/g;
+      const citationRegex = /"citation"\s*:\s*"([^"]*)"/g;
+      
+      const titles: string[] = [];
+      const citations: string[] = [];
+      
+      let match;
+      while ((match = titleRegex.exec(content)) !== null) {
+        titles.push(match[1]);
+      }
+      
+      while ((match = citationRegex.exec(content)) !== null) {
+        citations.push(match[1]);
+      }
+      
+      console.log('[getDailyMassReadings] Extracted titles:', titles);
+      console.log('[getDailyMassReadings] Extracted citations:', citations);
+      
+      if (titles.length > 0 && citations.length === titles.length) {
+        return titles.map((title, index) => ({
+          title,
+          citation: citations[index],
+          summaryLoading: true,
+          summaryError: undefined
+        }));
+      }
+      
+      // If all else fails, last resort: fallback to line parsing
+      const fallbackReadings: any[] = [];
+      const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        if (/first reading/i.test(line)) {
+          fallbackReadings.push({ 
+            title: "First Reading", 
+            citation: line.replace(/first reading[:\-]?/i, '').trim(),
+            summaryLoading: true,
+            summaryError: undefined
+          });
+        } else if (/responsorial psalm/i.test(line)) {
+          fallbackReadings.push({ 
+            title: "Responsorial Psalm", 
+            citation: line.replace(/responsorial psalm[:\-]?/i, '').trim(),
+            summaryLoading: true,
+            summaryError: undefined
+          });
+        } else if (/gospel/i.test(line)) {
+          fallbackReadings.push({ 
+            title: "Gospel", 
+            citation: line.replace(/gospel[:\-]?/i, '').trim(),
+            summaryLoading: true,
+            summaryError: undefined
+          });
+        }
+      }
+      
+      if (fallbackReadings.length > 0) {
+        return fallbackReadings;
+      }
+      
+      throw new Error("Could not parse readings from Magisterium response.");
+    }
+  } catch (error: any) {
+    console.error('[getDailyMassReadings] Error (Magisterium Proxy):', error);
+    throw error;
   }
-  // Adapt as needed: expects result.data.data to be array of readings
-  return result.data.data;
-};
+}
 
 /**
  * Calls the new Firebase Callable Function for reading summaries.

@@ -1,6 +1,7 @@
 // readingSummariesCache.ts
 // Robust, production-ready client-side cache for reading summaries (and similar data)
 // Uses localStorage for persistence, with in-memory fallback
+// Frontend readings cache temporarily disabled. All functions now no-ops.
 
 import type { LiturgicalReading } from '@/types/liturgical';
 
@@ -21,58 +22,22 @@ type SummaryCache = {
 let memoryCache: SummaryCache | null = null;
 
 function loadCache(): SummaryCache {
-  if (memoryCache) return memoryCache;
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (raw) {
-      const parsed: SummaryCache = JSON.parse(raw);
-      // Filter out expired entries
-      const now = Date.now();
-      for (const key of Object.keys(parsed)) {
-        if (now - parsed[key].timestamp > CACHE_EXPIRATION_MS) {
-          delete parsed[key];
-        }
-      }
-      memoryCache = parsed;
-      return parsed;
-    }
-  } catch (err) {
-    // localStorage might be unavailable or corrupted
-    console.warn('Failed to load reading summaries cache:', err);
-  }
-  memoryCache = {};
-  return memoryCache;
+  return {};
 }
 
 function saveCache(cache: SummaryCache) {
-  memoryCache = cache;
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-  } catch (err) {
-    // localStorage may be full or unavailable
-    console.warn('Failed to save reading summaries cache:', err);
-  }
+  // no-op
 }
 
 function makeCacheKey(title: string, citation: string): string {
-  return `${title.trim().toLowerCase()}::${citation.trim().toLowerCase()}`;
+  return '';
 }
 
 export function getSummaryWithCache(
   title: string,
   citation: string
 ): SummaryCacheEntry | null {
-  const cache = loadCache();
-  const key = makeCacheKey(title, citation);
-  const entry = cache[key];
-  if (!entry) return null;
-  // Expiry check (redundant with loadCache, but safe)
-  if (Date.now() - entry.timestamp > CACHE_EXPIRATION_MS) {
-    delete cache[key];
-    saveCache(cache);
-    return null;
-  }
-  return entry;
+  return null;
 }
 
 export function saveSummaryToCache(
@@ -81,61 +46,24 @@ export function saveSummaryToCache(
   summary: string,
   detailedExplanation?: string
 ) {
-  const cache = loadCache();
-  const key = makeCacheKey(title, citation);
-  cache[key] = {
-    summary,
-    detailedExplanation,
-    timestamp: Date.now(),
-  };
-  saveCache(cache);
+  // no-op
 }
 
 export function clearOldSummariesFromCache() {
-  const cache = loadCache();
-  const now = Date.now();
-  let changed = false;
-  for (const key of Object.keys(cache)) {
-    if (now - cache[key].timestamp > CACHE_EXPIRATION_MS) {
-      delete cache[key];
-      changed = true;
-    }
-  }
-  if (changed) saveCache(cache);
+  // no-op
 }
 
 export function clearAllSummariesFromCache() {
-  memoryCache = {};
-  try {
-    localStorage.removeItem(CACHE_KEY);
-  } catch (err) {
-    // Ignore
-  }
+  // no-op
 }
 
 // Returns basic statistics about the cache: count, size, and oldest/newest entry timestamps
 export function getCacheStats() {
-  const cache = loadCache();
-  const keys = Object.keys(cache);
-  let totalSize = 0;
-  let oldest = null;
-  let newest = null;
-  for (const key of keys) {
-    const entry = cache[key];
-    const entrySize =
-      key.length +
-      (entry.summary?.length || 0) +
-      (entry.detailedExplanation?.length || 0) +
-      8; // timestamp approx
-    totalSize += entrySize;
-    if (!oldest || entry.timestamp < oldest) oldest = entry.timestamp;
-    if (!newest || entry.timestamp > newest) newest = entry.timestamp;
-  }
   return {
-    count: keys.length,
-    totalSizeBytes: totalSize,
-    oldestTimestamp: oldest,
-    newestTimestamp: newest,
+    count: 0,
+    totalSizeBytes: 0,
+    oldestTimestamp: null,
+    newestTimestamp: null,
   };
 }
 
@@ -145,27 +73,10 @@ export async function preFetchReadingsForDate(
   getDailyMassReadings: (date: Date) => Promise<LiturgicalReading[]>,
   getReadingSummary: (reading: { title: string; citation: string }) => Promise<{ summary: string; detailedExplanation?: string }>
 ): Promise<number> {
-  const readings = await getDailyMassReadings(date);
-  let count = 0;
-  for (const reading of readings) {
-    const cached = getSummaryWithCache(reading.title, reading.citation);
-    if (!cached) {
-      try {
-        const summaryObj = await getReadingSummary({ title: reading.title, citation: reading.citation });
-        saveSummaryToCache(reading.title, reading.citation, summaryObj.summary, summaryObj.detailedExplanation);
-        count++;
-      } catch (e) {
-        // Ignore individual reading summary errors
-      }
-    }
-  }
-  return count;
+  return 0;
 }
 
 // Clear the cache and return the number of entries deleted
 export function clearCache() {
-  const cache = loadCache();
-  const count = Object.keys(cache).length;
-  clearAllSummariesFromCache();
-  return count;
+  return 0;
 }
