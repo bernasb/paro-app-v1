@@ -1,7 +1,7 @@
 import { LiturgicalReading } from '@/types/liturgical';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Book, Info } from 'lucide-react';
+import { Book, Info, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 // Import specific formatters needed here
@@ -85,6 +85,49 @@ const renderFormattedContent = (reading: LiturgicalReading) => {
   }
 };
 
+// Helper function to render a list of citations
+const renderCitations = (citations: any[]) => {
+  if (!citations || citations.length === 0) return null;
+
+  return (
+    <div className="mt-4 space-y-4">
+      {citations.map((citation, index) => (
+        <div key={index} className="p-3 bg-muted/30 rounded-md">
+          <div className="flex items-center gap-2 font-semibold mb-1">
+            <span>{index + 1}.</span>
+            {citation.document_title && (
+              <span className="text-clergy-primary">{citation.document_title}</span>
+            )}
+          </div>
+          {citation.document_author && (
+            <div className="text-sm text-muted-foreground mb-1">{citation.document_author}</div>
+          )}
+          {citation.document_year && (
+            <div className="text-sm text-muted-foreground mb-2">{citation.document_year} AD</div>
+          )}
+          {citation.cited_text && (
+            <div className="text-sm border-l-4 border-muted pl-3 py-1 italic">
+              {citation.cited_text}
+            </div>
+          )}
+          {citation.source_url && (
+            <div className="text-xs text-muted-foreground mt-2">
+              <a 
+                href={citation.source_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-clergy-primary hover:underline"
+              >
+                Source
+              </a>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const ReadingCard = ({ reading }: ReadingCardProps) => {
   // Determine if the summary should be shown
   const showSummary =
@@ -97,6 +140,7 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
     content: reading.content || '',
     summary: reading.summary || '',
     detailedExplanation: reading.detailedExplanation || '',
+    citations: reading.citations || []
   };
 
   // Format citation to replace HTML entity with en-dash
@@ -156,6 +200,21 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
                           ),
                         }}
                       />
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+                
+                {/* References Section */}
+                {safeReading.citations && safeReading.citations.length > 0 && (
+                  <Collapsible className="mt-2">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex items-center gap-1 mt-2">
+                        <BookOpen className="h-4 w-4" />
+                        View References ({safeReading.citations.length})
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-2">
+                      {renderCitations(safeReading.citations)}
                     </CollapsibleContent>
                   </Collapsible>
                 )}

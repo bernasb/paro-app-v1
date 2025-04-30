@@ -1,15 +1,14 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
-import axios from 'axios';
 import { errorResponse, successResponse, requireAuth } from '../shared/utils';
 
-// Replace with your actual Gemini API endpoint and key retrieval logic
-const GEMINI_API_URL = 'https://your-gemini-api-endpoint-for-summary';
+// Import Magisterium SDK just like in dailyReadingsProxy
+import Magisterium from 'magisterium';
 
-// Using Secret Manager for API key access same as dailyReadingsProxy
+// Using Secret Manager for API key access
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
-// Secret name for Google API key in GCP Secret Manager
-const GOOGLE_API_KEY_SECRET = 'GOOGLE_API_KEY';
+// Secret name for the Magisterium API key in GCP Secret Manager
+const MAGISTERIUM_API_KEY_SECRET = 'MAGISTERIUM_API_KEY';
 
 // Initialize Secret Manager client
 const secretManagerClient = new SecretManagerServiceClient();
@@ -44,49 +43,75 @@ async function getSecret(secretName: string): Promise<string> {
   }
 }
 
+/**
+ * Initialize the Magisterium client with API key
+ */
+async function getMagisteriumClient() {
+  try {
+    const apiKey = await getSecret(MAGISTERIUM_API_KEY_SECRET);
+    return new Magisterium({
+      apiKey: apiKey,
+    });
+  } catch (error) {
+    console.error('[readingSummaryProxy] Failed to initialize Magisterium client:', error);
+    throw new Error('Could not initialize Magisterium client');
+  }
+}
+
 export const readingSummaryProxy = onCall(async (request: CallableRequest<any>) => {
   requireAuth(request);
   const { title, citation = '' } = request.data; // Make citation optional with default empty string
   if (!title) {
     throw new HttpsError('invalid-argument', 'Missing "title" parameter');
   }
+  
   try {
     console.log(`[readingSummaryProxy] Generating summary for: ${title} ${citation ? `(${citation})` : ''}`);
     
-    // Get the API key from Secret Manager
-    const apiKey = await getSecret(GOOGLE_API_KEY_SECRET);
+    // Get the Magisterium client
+    const magisterium = await getMagisteriumClient();
     
-    // Using Gemini API to generate a short summary
-    const response = await axios.post(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-      {
-        contents: [
-          {
-            role: "user",
-            parts: [{
-              text: `Generate a brief 1-2 sentence summary of what Catholics would hear in the following Bible reading at Mass: ${title} ${citation ? citation : ''}.\n\nKeep your summary concise, informative and focused on the key message. Format your response as plain text with no headings or labels.`
-            }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 150
+    // Build a more explicit, detailed prompt
+    const prompt = `In 5-7 detailed sentences, summarize the importance of ${title}${citation ? ` (${citation})` : ''} for understanding the Catholic faith and living it out in daily life. Please:\n- Explain the spiritual and practical significance for modern Catholics.\n- Include concrete examples or applications where possible.\n- At the end, provide 2-3 relevant references or citations from official Catholic sources (Magisterial documents, Catechism, or Church Fathers). For each reference, include: document title, author, year, a short cited text, and a source URL if available. Format citations as a JSON array under the heading 'References:' like this:\n\nReferences:\n[{"title": "...", "author": "...", "year": "...", "cited_text": "...", "url": "..."}]\nIf no references are available, say 'No references found.'`;
+    
+    // Call the Magisterium API
+    const results = await magisterium.chat.completions.create({
+      model: "magisterium-1",
+      messages: [
+        {
+          role: "user",
+          content: prompt
         }
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        timeout: 15000
-      }
-    );
+      ]
+    });
     
-    // Extract the summary from Gemini response
-    const summary = response.data.candidates[0]?.content?.parts[0]?.text || 
-                    `Summary for ${title}${citation ? ` (${citation})` : ''}`;
-    return successResponse({ summary });
+    // Extract summary and citations
+    const content = results.choices[0]?.message?.content || '';
+
+    // Extract citations JSON if present
+    let citations: any[] = [];
+    const referencesMatch = content.match(/References:\s*\n(\[.*?\])/is);
+    if (referencesMatch) {
+      try {
+        citations = JSON.parse(referencesMatch[1].trim());
+      } catch (err) {
+        citations = [];
+      }
+    }
+
+    // Remove the references section from the summary
+    const summaryText = content.replace(/References:\s*\n\[.*?\]/is, '').trim();
+
+    // Package the response with summary and references
+    const responseData = {
+      summary: summaryText,
+      detailedExplanation: summaryText,
+      citations
+    };
+    
+    return successResponse(responseData);
   } catch (error: any) {
+    console.error('[readingSummaryProxy] Error:', error);
     return errorResponse(error.message || 'Failed to generate reading summary.');
   }
 });

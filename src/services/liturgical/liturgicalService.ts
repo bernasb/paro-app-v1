@@ -395,23 +395,31 @@ export async function getDailyMassReadings(dateString: string): Promise<any[]> {
 export const getReadingSummary = async (reading: {
   title: string;
   citation: string;
-}): Promise<{ summary: string; detailedExplanation?: string }> => {
+}): Promise<{ summary: string; detailedExplanation?: string; citations?: any[] }> => {
   const functions: Functions = getFunctions();
   const callable = httpsCallable<{ title: string; citation: string }, any>(
     functions,
     'readingSummaryProxy',
   );
+  
+  console.log(`[getReadingSummary] Requesting summary for ${reading.title} (${reading.citation})`);
+  
   const result: HttpsCallableResult<any> = await callable({
     title: reading.title,
     citation: reading.citation,
   });
+  
   if (!result.data || result.data.status !== 'success') {
     throw new Error(result.data?.data || 'Failed to fetch reading summary from callable function');
   }
-  // Adapt as needed: expects result.data.summary and result.data.detailedExplanation
+  
+  console.log(`[getReadingSummary] Received summary response:`, result.data);
+  
+  // Return summary, detailed explanation (if any), and citations (if any)
   return {
-    summary: result.data.summary,
-    detailedExplanation: result.data.detailedExplanation,
+    summary: result.data.data.summary || '',
+    detailedExplanation: result.data.data.detailedExplanation || '',
+    citations: result.data.data.citations || []
   };
 };
 
