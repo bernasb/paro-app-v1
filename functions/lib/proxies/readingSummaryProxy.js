@@ -54,19 +54,55 @@ exports.readingSummaryProxy = (0, https_1.onCall)(async (request) => {
         console.error('[readingSummaryProxy] Could not get API key:', err);
         throw new https_1.HttpsError('internal', 'Could not retrieve Magisterium API key.');
     }
-    // 3. Build REST API request body (as in Python, but match Magisterium API expectations)
+    // 3. Build REST API request body
     const body = {
         model: 'magisterium-1',
         messages: [
             {
                 role: 'user',
-                content: `Summarize ONLY the following liturgical reading (do NOT include summaries of other readings from the same day). If this is a Psalm, provide a summary in 3-5 bullet points or short sentences, including key themes and the spiritual attitude or response encouraged by the Psalm. For other readings, provide 5-7 bullet points or short, clear sentences (using a list if appropriate), including key themes, theological insights, and context. Do not include any introductory or summary statement before the bullet points. Each bullet point should be on its own line, starting with a bullet (•). Use citations in the format [^n] and provide a references section with full citation details. Summarize ALL readings, including Psalms.\n\nTitle: ${title}\nCitation: ${citation}`
+                // Use backticks (`) for the template literal
+                content: `Summarize ONLY the following Catholic liturgical reading (do NOT include 
+  or add summaries of other readings from the same day).
+
+  - For any First through Sixth readings, Canticles, or Epistles encountered (which will vary
+  through the liturgical year), compose one short, comprehensive paragraph explaining how the 
+  reading provides context and background for understanding God's plan of salvation throughout history, what 
+  the practical faith takeaway message is for Catholics, and how Catholics can practice, 
+  consider or apply its message in daily life.  Limit your entire explanation to one 
+  paragraph, but use enough detail to provide a clear and concise summary.
+
+  - For any Psalm encountered, provide a sentence describing the key theme and the 
+  spiritual attitude Catholics need to consider when reading the Psalm.
+
+  - For any Gospel or alternative Gospel, compose one short, comprehensive paragraph explaining 
+  key themes, theological insights, and context for better knowing what Jesus said and did, and 
+  how this Gospel impacts our Catholic daily life in how we live and further commit to 
+  following Christ. Limit your entire explanation to one paragraph, but use enough detail 
+  to provide a clear and concise summary.
+
+  - Do not include any introductory or summary statement(s) before your output. 
+
+  - Each bullet point, if used (but not necessary) should be on its own line, starting with a bullet (•). 
+
+  - Summarize ALL readings, including Psalms.
+
+  - Use citations in the format [^n] and provide a references section with full citation details.
+
+  - Provide the document IDs or titles for the references used in your previous response and include 
+  them in the citations array with the full citation details.
+
+  - Respond ONLY with a valid JSON object, containing a "summary" field with the summary text, 
+  a "detailedExplanation" field with any additional explanation, and a "citations" field with 
+  an array of citation objects.
+
+Title: ${title}
+Citation: ${citation}`
             }
         ],
-        max_tokens: 512,
-        temperature: 0.7,
+        max_tokens: 256,
+        temperature: 0.5,
         stream: false,
-        return_related_questions: false
+        return_related_questions: true
     };
     // 4. Call Magisterium REST API directly
     let magisteriumResponseRaw;

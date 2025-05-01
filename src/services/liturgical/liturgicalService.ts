@@ -257,7 +257,26 @@ export async function getDailyMassReadings(dateString: string): Promise<any[]> {
     const functions = getFunctions();
     const magisteriumProxy = httpsCallable(functions, 'magisteriumProxy');
     // Strongly instruct the AI to return only JSON
-    const prompt = `What are the official Catholic Mass readings for ${dateString}? Respond ONLY with a valid JSON array of objects, each with "title" and "citation" fields. For example: [{"title":"First Reading","citation":"Acts 4:32-37"}, ...]. Do NOT include any other text.`;
+    const prompt = `What are the official Catholic Mass readings for ${dateString}? 
+    
+    What are all the offical Catholic Mass readings for ${dateString} in the United States, 
+    including any alternate or extended readings for special occasions? Provide a comprehensive 
+    list of reading references and reading titles (First Reading, Second Reading, Third Reading, 
+    Fourth Reading, Fifth Reading, Sixth Reading, Psalm, Alleluia, Gospel, Alternative Gospel, 
+    Canticle, Epistle, Epistle Psalm, etc.), including those for specific solemnities or occasions 
+    that have their own unique sets of readings, such as the Easter Vigil, Palm Sunday, and Ash 
+    Wednesday.
+
+    Example:
+    [{"title":"First Reading","citation":"Acts 4:32-37"}, ...]
+
+    Respond ONLY with a valid JSON array of objects, each with "title" and "citation" fields. 
+    For example: [{"title":"First Reading","citation":"Acts 4:32-37"}, ...]. 
+    
+    For any alternate readings, include the official description of the alternate reading in 
+    the "title" field such as "Memorial of Saint Joseph the Worker".
+    
+    Do NOT include any other text in your output.`;
     
     console.log('[getDailyMassReadings] Sending prompt to Magisterium:', prompt);
     const result = await magisteriumProxy({
