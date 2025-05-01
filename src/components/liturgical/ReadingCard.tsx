@@ -205,13 +205,13 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
             {safeReading.summary && !safeReading.summaryLoading && !safeReading.summaryError && (
               <div className="mb-4">
                 <div className="paro-summary-bullets text-muted-foreground">
-                  <h4 className="font-semibold mb-1">Summary</h4>
+                  <div style={{ height: '1em' }} />
                   <p className="mb-3">{safeReading.summary}</p>
 
-                  {/* Detailed explanation section with bold heading and clean text */}
+                  {/* Detailed explanation section with spacing only */}
                   {safeReading.detailedExplanation && (
                     <>
-                      <h4 className="font-semibold mb-1 mt-4">Detailed Explanation</h4>
+                      <div style={{ height: '1em' }} />
                       <p className="mb-2">{safeReading.detailedExplanation}</p>
                     </>
                   )}
