@@ -395,7 +395,7 @@ export async function getDailyMassReadings(dateString: string): Promise<any[]> {
 export const getReadingSummary = async (reading: {
   title: string;
   citation: string;
-}): Promise<{ summary: string; detailedExplanation?: string; citations?: any[] }> => {
+}): Promise<{ summary: string; summaryError: string; detailedExplanation?: string; citations?: any[] }> => {
   const functions: Functions = getFunctions();
   const callable = httpsCallable<{ title: string; citation: string }, any>(
     functions,
@@ -418,6 +418,7 @@ export const getReadingSummary = async (reading: {
   // Return summary, detailed explanation (if any), and citations (if any)
   return {
     summary: result.data.data.summary || '',
+    summaryError: result.data.data.summaryError || '',
     detailedExplanation: result.data.data.detailedExplanation || '',
     citations: result.data.data.citations || []
   };

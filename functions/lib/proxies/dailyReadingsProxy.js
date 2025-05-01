@@ -9,12 +9,11 @@ const https_1 = require("firebase-functions/v2/https");
 const utils_1 = require("../shared/utils");
 const axios_1 = __importDefault(require("axios"));
 const secret_manager_1 = require("@google-cloud/secret-manager");
-const magisterium_1 = __importDefault(require("magisterium"));
-const magisterium = new magisterium_1.default({
-    apiKey: process.env.MAGISTERIUM_API_KEY,
-});
+const node_fetch_1 = __importDefault(require("node-fetch"));
 // Secret name for Gemini API key in GCP Secret Manager
 const GOOGLE_API_KEY_SECRET = 'GOOGLE_API_KEY';
+// Secret name for Magisterium API key in GCP Secret Manager
+const MAGISTERIUM_API_KEY_SECRET = 'MAGISTERIUM_API_KEY';
 // Initialize Secret Manager client
 const secretManagerClient = new secret_manager_1.SecretManagerServiceClient();
 /**
@@ -257,14 +256,45 @@ async function getLiturgicalCycles(date) {
 async function fetchReadingReferencesMagisterium(date) {
     const dateString = date.toISOString().split('T')[0];
     console.log('[MAGISTERIUM_DEBUG] Fetching readings from Magisterium for', dateString);
+    // Get API key from Secret Manager
+    let apiKey;
+    try {
+        apiKey = await getSecret('MAGISTERIUM_API_KEY');
+    }
+    catch (err) {
+        console.error('[dailyReadingsProxy] Could not get API key:', err);
+        throw new https_1.HttpsError('internal', 'Could not retrieve Magisterium API key.');
+    }
+    // Build prompt for REST API
     const prompt = `What are the official Catholic Mass readings for ${dateString}? Please provide only the scripture references for the First Reading, Responsorial Psalm, and Gospel.`;
-    const results = await magisterium.chat.completions.create({
-        model: "magisterium-1",
-        messages: [
-            { role: "user", content: prompt }
-        ]
-    });
-    const content = results.choices[0].message.content ?? '';
+    // Build REST API request body
+    const body = {
+        model: 'magisterium-1',
+        prompt: prompt,
+        max_tokens: 256,
+        temperature: 0.2,
+        stop: null
+    };
+    // Call Magisterium REST API directly
+    let magisteriumResponseRaw;
+    let content = '';
+    try {
+        const response = await (0, node_fetch_1.default)('https://api.magisterium.com/v1/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+        magisteriumResponseRaw = await response.json();
+        content = magisteriumResponseRaw?.choices?.[0]?.text || magisteriumResponseRaw?.text || '';
+        console.log('[dailyReadingsProxy] Magisterium raw response:', JSON.stringify(magisteriumResponseRaw));
+    }
+    catch (err) {
+        console.error('[dailyReadingsProxy] Magisterium REST API call failed:', err);
+        throw new https_1.HttpsError('internal', 'Failed to call Magisterium API.');
+    }
     // Attempt to extract references for each reading type
     const readings = [];
     const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
@@ -279,7 +309,6 @@ async function fetchReadingReferencesMagisterium(date) {
             readings.push({ title: "Gospel", reference: line.replace(/gospel[:\-]?/i, '').trim() });
         }
     }
-    // Remove fallback: throw if no readings parsed
     if (readings.length === 0) {
         throw new Error(`Could not parse readings from Magisterium API response for ${dateString}. Raw content: ${content}`);
     }

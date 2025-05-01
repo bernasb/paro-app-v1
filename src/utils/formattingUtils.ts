@@ -85,74 +85,63 @@ export const formatDetailedExplanation = (text: string): string => {
 export const formatSummary = (text: string): string => {
   if (!text) return '';
 
-  // Remove parenthetical terms like (*metanoia*) and (kerygma)
-  const cleanText = text.replace(/\(\*[^*]+\*\)|\([^)]+\)/g, '');
+  // 1. Remove any introductory statement like "This passage here is a summary..."
+  let cleanText = text.replace(/^(.*?)bullet points: */ims, '');
 
-  // Extract the title (first line up to "because it:")
-  const titleMatch = cleanText.match(/^(.*?because it:)/);
-  let title = titleMatch ? titleMatch[1].trim() : '';
+  // 2. Replace citation numbers with bracketed notation at end of sentences
+  cleanText = cleanText
+    // First handle [^n] format (convert to [n])
+    .replace(/\[\^([0-9]+(?:, *\^[0-9]+)*)\]/g, (match, p1) => {
+      // Extract all numbers and format them without the ^ symbol
+      const nums = p1.split(',').map(n => n.replace(/\^/g, '').trim()).join(', ');
+      return `[${nums}]`;
+    })
+    // Then handle line breaks with number sequences before punctuation (collapse them into bracketed numbers)
+    .replace(/(•[^.?!\n]*?)(?:<br\s*\/?>|\n)+(\d+(?:(?:<br\s*\/?>|\n)+\d+)*)([.?!])/g, (match, bulletText, nums, end) => {
+      if (!nums) return match;
+      // Remove line breaks, get unique numbers, and format as [1, 2, 3]
+      const numList = (nums || '')
+        .replace(/(<br\s*\/?>|\n)+/g, ' ')
+        .split(/\s+/)
+        .filter(n => n && !isNaN(Number(n)))
+        .join(', ');
+      
+      return `${bulletText} [${numList}]${end}`;
+    })
+    // Finally handle inline number sequences before punctuation (1 2 3.)
+    .replace(/(•[^.?!\n]*?)(\s((\d{1,2}\s?)+))([.?!])(?=\s|$)/g, (match, bulletText, numsWithSpace, nums, _, end) => {
+      if (/\[\d/.test(match)) return match; // Don't convert if already in brackets
+      
+      const numList = nums
+        .trim()
+        .split(/\s+/)
+        .filter((n) => n && !isNaN(Number(n)))
+        .join(', ');
+      
+      return `${bulletText} [${numList}]${end}`;
+    });
 
-  // Remove "For Catholics, " from the beginning
-  title = title.replace(/^For Catholics,\s*/i, '');
+  // 2b. Bold any Markdown-style headings at the start of a bullet ("**Heading:**")
+  cleanText = cleanText.replace(/([•\-\*]\s*)\*\*([^*]+):\*\*/g, (match, bullet, heading) => {
+    return `${bullet}<b>${heading}:</b>`;
+  });
 
-  // Extract the conclusion (last sentence after the bullet points)
-  const conclusionMatch = cleanText.match(/([^•]+)$/);
-  let conclusion = conclusionMatch ? conclusionMatch[1].trim() : '';
+  // 3. Convert Markdown bullets ("* ", "- ", or "• ") at line start to HTML bullets
+  const bulletRegex = /^\s*[\*\-•] +/gm;
+  cleanText = cleanText.replace(bulletRegex, '• ');
 
-  // Add "This passage" to the beginning of the conclusion if it doesn't already start with it
-  if (conclusion && !conclusion.startsWith('This passage')) {
-    // Check if it starts with a lowercase letter (indicating it's continuing a sentence)
-    if (/^[a-z]/.test(conclusion)) {
-      conclusion = 'This passage ' + conclusion;
+  // 4. Split into lines and wrap each bullet point with <div>• ...</div>
+  const lines = cleanText.split(/\n+/).filter((l) => l.trim());
+  let html = '';
+  for (const line of lines) {
+    if (line.trim().startsWith('•')) {
+      html += `<div style="margin-bottom: 0.5em;">${line.trim()}</div>`;
     } else {
-      conclusion = 'This passage ' + conclusion.charAt(0).toLowerCase() + conclusion.slice(1);
+      html += `<div>${line.trim()}</div>`;
     }
   }
 
-  // Extract bullet points
-  const bulletPointsMatch = cleanText.match(/•(.*?)(?=•|[^•]+$)/gs);
-  let bulletPoints = bulletPointsMatch
-    ? bulletPointsMatch.map((point) => point.replace(/^•\s*/, '').trim())
-    : [];
-
-  // Filter out empty or malformed bullet points
-  bulletPoints = bulletPoints.filter((point) => point && point.length > 1);
-
-  // Clean up any double spaces that might have been created by removing parenthetical terms
-  bulletPoints = bulletPoints.map((point) => point.replace(/\s{2,}/g, ' '));
-
-  // Apply line breaking to bullet points for better readability
-  bulletPoints = bulletPoints.map((point) => breakTextIntoLines(point, 40, 60));
-
-  // Apply line breaking to conclusion
-  if (conclusion) {
-    conclusion = conclusion.replace(/\s{2,}/g, ' '); // Clean up double spaces
-    conclusion = breakTextIntoLines(conclusion, 40, 60);
-  }
-
-  // Build HTML with proper formatting
-  let formattedHtml = '';
-
-  if (title) {
-    formattedHtml += `<strong>${title}</strong>\n\n<br />\n\n`;
-  }
-
-  if (bulletPoints.length > 0) {
-    formattedHtml += '<blockquote class="pl-4 border-l-2 border-muted-foreground/30">\n';
-    bulletPoints.forEach((point) => {
-      formattedHtml += `<div class="flex mb-3">
-        <span class="mr-2 flex-shrink-0">•</span>
-        <span>${point.replace(/\n/g, '<br />')}</span>
-      </div>\n`;
-    });
-    formattedHtml += '</blockquote>\n\n<br />\n\n';
-  }
-
-  if (conclusion) {
-    formattedHtml += `<strong>${conclusion.replace(/\n/g, '<br />')}</strong>`;
-  }
-
-  return formattedHtml;
+  return html;
 };
 
 // --- Types for Structured Psalm Formatting ---
@@ -213,7 +202,7 @@ const breakTextIntoLines = (text: string, minChars = 50, maxChars = 65): string 
     // 2. If no sentence end, look for other punctuation [, ; :] in [min, ideal]
     if (breakPoint === -1) {
       for (let i = idealEnd - 1; i >= minimumEnd; i--) {
-        if (/[,;:]/.test(text[i])) {
+        if (/[,:;]/.test(text[i])) {
           breakPoint = i + 1;
           break;
         }

@@ -1,0 +1,36 @@
+.paro-summary-bullets {
+  max-width: 50vw;
+  min-width: 320px;
+  width: clamp(320px, 45vw, 600px);
+  margin-left: 0;
+  margin-right: auto;
+  word-break: break-word;
+  /* For vertical readability */
+  line-height: 1.7;
+  text-align: left !important;
+}
+
+.paro-summary-bullets div {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5em;
+  /* Indent for bullets */
+  text-indent: -1.5em;
+  padding-left: 1.5em;
+  white-space: normal;
+  text-align: left;
+}
+
+.paro-summary-bullets div::before {
+  content: '';
+  /* The bullet is already in the HTML, so no extra bullet here */
+}
+
+/* Superscripts: inline, normal weight, not justified */
+.paro-summary-bullets sup {
+  font-size: 0.85em;
+  vertical-align: super;
+  font-weight: normal;
+  margin-left: 0.1em;
+  margin-right: 0.1em;
+}

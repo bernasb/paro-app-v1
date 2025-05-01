@@ -6,12 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.readingSummaryProxy = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const utils_1 = require("../shared/utils");
-// Import Magisterium SDK just like in dailyReadingsProxy
-const magisterium_1 = __importDefault(require("magisterium"));
+const node_fetch_1 = __importDefault(require("node-fetch"));
 // Using Secret Manager for API key access
 const secret_manager_1 = require("@google-cloud/secret-manager");
 // Secret name for the Magisterium API key in GCP Secret Manager
 const MAGISTERIUM_API_KEY_SECRET = 'MAGISTERIUM_API_KEY';
+// Magisterium REST API endpoint for completions
+const MAGISTERIUM_API_URL = 'https://www.magisterium.com/api/v1/chat/completions';
 // Initialize Secret Manager client
 const secretManagerClient = new secret_manager_1.SecretManagerServiceClient();
 /**
@@ -41,68 +42,88 @@ async function getSecret(secretName) {
         throw new Error(`Failed to retrieve secret ${secretName}`);
     }
 }
-/**
- * Initialize the Magisterium client with API key
- */
-async function getMagisteriumClient() {
-    try {
-        const apiKey = await getSecret(MAGISTERIUM_API_KEY_SECRET);
-        return new magisterium_1.default({
-            apiKey: apiKey,
-        });
-    }
-    catch (error) {
-        console.error('[readingSummaryProxy] Failed to initialize Magisterium client:', error);
-        throw new Error('Could not initialize Magisterium client');
-    }
-}
 exports.readingSummaryProxy = (0, https_1.onCall)(async (request) => {
     (0, utils_1.requireAuth)(request);
     const { title, citation = '' } = request.data; // Make citation optional with default empty string
-    if (!title) {
-        throw new https_1.HttpsError('invalid-argument', 'Missing "title" parameter');
-    }
+    // 1. Get API key
+    let apiKey;
     try {
-        console.log(`[readingSummaryProxy] Generating summary for: ${title} ${citation ? `(${citation})` : ''}`);
-        // Get the Magisterium client
-        const magisterium = await getMagisteriumClient();
-        // Build a more explicit, detailed prompt
-        const prompt = `In 5-7 detailed sentences, summarize the importance of ${title}${citation ? ` (${citation})` : ''} for understanding the Catholic faith and living it out in daily life. Please:\n- Explain the spiritual and practical significance for modern Catholics.\n- Include concrete examples or applications where possible.\n- At the end, provide 2-3 relevant references or citations from official Catholic sources (Magisterial documents, Catechism, or Church Fathers). For each reference, include: document title, author, year, a short cited text, and a source URL if available. Format citations as a JSON array under the heading 'References:' like this:\n\nReferences:\n[{"title": "...", "author": "...", "year": "...", "cited_text": "...", "url": "..."}]\nIf no references are available, say 'No references found.'`;
-        // Call the Magisterium API
-        const results = await magisterium.chat.completions.create({
-            model: "magisterium-1",
-            messages: [
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ]
+        apiKey = await getSecret(MAGISTERIUM_API_KEY_SECRET);
+    }
+    catch (err) {
+        console.error('[readingSummaryProxy] Could not get API key:', err);
+        throw new https_1.HttpsError('internal', 'Could not retrieve Magisterium API key.');
+    }
+    // 3. Build REST API request body (as in Python, but match Magisterium API expectations)
+    const body = {
+        model: 'magisterium-1',
+        messages: [
+            {
+                role: 'user',
+                content: `Summarize ONLY the following liturgical reading (do NOT include summaries of other readings from the same day). If this is a Psalm, provide a summary in 3-5 bullet points or short sentences, including key themes and the spiritual attitude or response encouraged by the Psalm. For other readings, provide 5-7 bullet points or short, clear sentences (using a list if appropriate), including key themes, theological insights, and context. Do not include any introductory or summary statement before the bullet points. Each bullet point should be on its own line, starting with a bullet (•). Use citations in the format [^n] and provide a references section with full citation details. Summarize ALL readings, including Psalms.\n\nTitle: ${title}\nCitation: ${citation}`
+            }
+        ],
+        max_tokens: 512,
+        temperature: 0.7,
+        stream: false,
+        return_related_questions: false
+    };
+    // 4. Call Magisterium REST API directly
+    let magisteriumResponseRaw;
+    let rawText = '';
+    try {
+        console.log('[readingSummaryProxy] Sending request to Magisterium API:', JSON.stringify(body));
+        const response = await (0, node_fetch_1.default)(MAGISTERIUM_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
         });
-        // Extract summary and citations
-        const content = results.choices[0]?.message?.content || '';
-        // Extract citations JSON if present
-        let citations = [];
-        const referencesMatch = content.match(/References:\s*\n(\[.*?\])/is);
-        if (referencesMatch) {
-            try {
-                citations = JSON.parse(referencesMatch[1].trim());
-            }
-            catch (err) {
-                citations = [];
-            }
+        rawText = await response.text();
+        console.log('[readingSummaryProxy] Magisterium raw response (text):', rawText);
+        try {
+            magisteriumResponseRaw = JSON.parse(rawText);
+            console.log('[readingSummaryProxy] Parsed response:', JSON.stringify({
+                choices: magisteriumResponseRaw?.choices,
+                content: magisteriumResponseRaw?.choices?.[0]?.message?.content,
+                citations: magisteriumResponseRaw?.citations?.length
+            }));
         }
-        // Remove the references section from the summary
-        const summaryText = content.replace(/References:\s*\n\[.*?\]/is, '').trim();
-        // Package the response with summary and references
-        const responseData = {
-            summary: summaryText,
-            detailedExplanation: summaryText,
-            citations
-        };
-        return (0, utils_1.successResponse)(responseData);
+        catch (e) {
+            console.error('[readingSummaryProxy] Failed to parse response as JSON:', e);
+            magisteriumResponseRaw = null;
+        }
     }
-    catch (error) {
-        console.error('[readingSummaryProxy] Error:', error);
-        return (0, utils_1.errorResponse)(error.message || 'Failed to generate reading summary.');
+    catch (err) {
+        console.error('[readingSummaryProxy] Magisterium REST API call failed:', err);
+        throw new https_1.HttpsError('internal', 'Failed to call Magisterium API.');
     }
+    // 5. Parse the response (match Magisterium API expectations)
+    let summary = '';
+    let citations = [];
+    let summaryError = undefined;
+    try {
+        let content = '';
+        if (magisteriumResponseRaw) {
+            content = magisteriumResponseRaw?.choices?.[0]?.message?.content || '';
+            citations = magisteriumResponseRaw?.citations || [];
+        }
+        else {
+            content = rawText;
+            citations = [];
+        }
+        summary = content;
+    }
+    catch (err) {
+        console.error('[readingSummaryProxy] Error parsing Magisterium response:', err);
+        summary = rawText;
+        citations = [];
+    }
+    if (!summary || summary.trim() === '') {
+        summaryError = 'No summary was generated for this reading. Please try again later or check the API prompt/response.';
+        console.warn('[readingSummaryProxy] No summary extracted for:', { title, citation, rawText });
+    }
+    return (0, utils_1.successResponse)({ summary, citations, summaryError });
 });

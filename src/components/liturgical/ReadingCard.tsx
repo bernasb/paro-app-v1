@@ -15,6 +15,8 @@ import {
 } from '@/utils/formattingUtils';
 // Note: formatProseWithQuotes likely not needed anymore
 
+import './paro-summary-bullets.css';
+
 interface ReadingCardProps {
   reading: LiturgicalReading;
 }
@@ -94,26 +96,29 @@ const renderCitations = (citations: any[]) => {
       {citations.map((citation, index) => (
         <div key={index} className="p-3 bg-muted/30 rounded-md">
           <div className="flex items-center gap-2 font-semibold mb-1">
-            <span>{index + 1}.</span>
-            {citation.document_title && (
-              <span className="text-clergy-primary">{citation.document_title}</span>
+            <span>[^{index + 1}]</span>
+            {(citation.document_title || citation.title) && (
+              <span className="text-clergy-primary">{citation.document_title || citation.title}</span>
             )}
           </div>
-          {citation.document_author && (
-            <div className="text-sm text-muted-foreground mb-1">{citation.document_author}</div>
+          {(citation.document_author || citation.author) && (
+            <div className="text-sm text-muted-foreground mb-1">{citation.document_author || citation.author}</div>
           )}
-          {citation.document_year && (
-            <div className="text-sm text-muted-foreground mb-2">{citation.document_year} AD</div>
+          {(citation.document_year || citation.year) && (
+            <div className="text-sm text-muted-foreground mb-2">{citation.document_year || citation.year}</div>
           )}
-          {citation.cited_text && (
+          {(citation.document_reference || citation.reference) && (
+            <div className="text-sm text-muted-foreground mb-2">Reference: {citation.document_reference || citation.reference}</div>
+          )}
+          {(citation.cited_text) && (
             <div className="text-sm border-l-4 border-muted pl-3 py-1 italic">
               {citation.cited_text}
             </div>
           )}
-          {citation.source_url && (
+          {(citation.url || citation.source_url) && (
             <div className="text-xs text-muted-foreground mt-2">
               <a 
-                href={citation.source_url} 
+                href={citation.url || citation.source_url} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-clergy-primary hover:underline"
@@ -131,8 +136,9 @@ const renderCitations = (citations: any[]) => {
 export const ReadingCard = ({ reading }: ReadingCardProps) => {
   // Determine if the summary should be shown
   const showSummary =
-    !reading.title.toLowerCase().includes('gospel acclamation') &&
-    !reading.title.toLowerCase().includes('responsorial psalm');
+    reading.summary !== undefined &&
+    reading.summary !== null &&
+    reading.summary !== '';
 
   // Ensure reading content is not null/undefined
   const safeReading = {
@@ -177,7 +183,7 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
             {safeReading.summary && !safeReading.summaryLoading && !safeReading.summaryError && (
               <div className="mb-4">
                 <div
-                  className="text-muted-foreground"
+                  className="paro-summary-bullets text-muted-foreground"
                   dangerouslySetInnerHTML={{
                     __html: formatSummary(removeCharacterCounts(safeReading.summary)),
                   }}
@@ -210,7 +216,7 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
                     <CollapsibleTrigger asChild>
                       <Button variant="outline" size="sm" className="flex items-center gap-1 mt-2">
                         <BookOpen className="h-4 w-4" />
-                        View References ({safeReading.citations.length})
+                        View References
                       </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-2">

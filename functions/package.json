@@ -17,8 +17,7 @@
     "@google-cloud/secret-manager": "^6.0.1",
     "axios": "^1.9.0",
     "firebase-admin": "^12.7.0",
-    "firebase-functions": "^4.9.0",
-    "magisterium": "^0.0.5"
+    "firebase-functions": "^4.9.0"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
