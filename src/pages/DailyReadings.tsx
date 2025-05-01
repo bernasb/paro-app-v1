@@ -110,6 +110,7 @@ const DailyReadings = () => {
                       ...updatedReadings[index],
                       summary: summaryResult.summary,
                       detailedExplanation: summaryResult.detailedExplanation,
+                      citations: summaryResult.citations || [],
                       summaryLoading: false,
                       summaryError: undefined,
                     };

@@ -92,43 +92,52 @@ const renderCitations = (citations: any[]) => {
   if (!citations || citations.length === 0) return null;
 
   return (
-    <div className="mt-4 space-y-4">
-      {citations.map((citation, index) => (
-        <div key={index} className="p-3 bg-muted/30 rounded-md">
-          <div className="flex items-center gap-2 font-semibold mb-1">
-            <span>[^{index + 1}]</span>
-            {(citation.document_title || citation.title) && (
-              <span className="text-clergy-primary">{citation.document_title || citation.title}</span>
-            )}
+    <div className="mt-4 space-y-2">
+      <h4 className="font-semibold text-sm mb-2">References</h4>
+      {citations.map((citation, index) => {
+        // Use the citation id if available, otherwise use index+1
+        const citationNumber = citation.id || (index + 1);
+        
+        // Handle different citation field formats
+        const source = citation.source || citation.document_reference || '';
+        const author = citation.author || citation.document_author || '';
+        const year = citation.year || citation.document_year || '';
+        const citedText = citation.cited_text || '';
+        
+        return (
+          <div key={citationNumber} className="text-sm mb-2">
+            <div className="flex items-start">
+              <span className="font-medium mr-2">[{citationNumber}]</span>
+              <div>
+                <span className="font-medium">{source}</span>
+                {author && (
+                  <span className="text-muted-foreground"> — {author}</span>
+                )}
+                {year && (
+                  <span className="text-muted-foreground"> ({year})</span>
+                )}
+                {citedText && (
+                  <div className="mt-1 text-xs italic border-l-2 border-muted pl-3 py-1 text-muted-foreground">
+                    "{citedText}"
+                  </div>
+                )}
+                {(citation.url || citation.source_url) && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    <a 
+                      href={citation.url || citation.source_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-clergy-primary hover:underline"
+                    >
+                      Source
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          {(citation.document_author || citation.author) && (
-            <div className="text-sm text-muted-foreground mb-1">{citation.document_author || citation.author}</div>
-          )}
-          {(citation.document_year || citation.year) && (
-            <div className="text-sm text-muted-foreground mb-2">{citation.document_year || citation.year}</div>
-          )}
-          {(citation.document_reference || citation.reference) && (
-            <div className="text-sm text-muted-foreground mb-2">Reference: {citation.document_reference || citation.reference}</div>
-          )}
-          {(citation.cited_text) && (
-            <div className="text-sm border-l-4 border-muted pl-3 py-1 italic">
-              {citation.cited_text}
-            </div>
-          )}
-          {(citation.url || citation.source_url) && (
-            <div className="text-xs text-muted-foreground mt-2">
-              <a 
-                href={citation.url || citation.source_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-clergy-primary hover:underline"
-              >
-                Source
-              </a>
-            </div>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -149,8 +158,21 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
     citations: reading.citations || []
   };
 
+  // Debug: Log citations for this reading
+  console.log('ReadingCard citations:', safeReading.citations, 'for reading:', safeReading.title);
+
   // Format citation to replace HTML entity with en-dash
   const formattedCitation = (safeReading.citation || '').replace(/&#x2010;/g, '–');
+
+  // Compose a full title if this reading is an alternative or special memorial
+  let fullTitle = safeReading.title;
+  if (safeReading.memorialTitle) {
+    // If a memorialTitle field exists, prepend it
+    fullTitle = `${safeReading.memorialTitle} - ${safeReading.title}`;
+  } else if (safeReading.title.toLowerCase().includes('alternative') && safeReading.memorial) {
+    // If marked as alternative and has a memorial, prepend memorial
+    fullTitle = `${safeReading.memorial} - ${safeReading.title}`;
+  }
 
   return (
     <Card className="reading-card ml-6">
@@ -158,7 +180,7 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
       <CardHeader className="pb-2 pl-6">
         <CardTitle className="text-xl flex items-center gap-2">
           <Book className="h-5 w-5 text-clergy-primary" />
-          {safeReading.title}
+          {fullTitle}
         </CardTitle>
         <CardDescription>{formattedCitation}</CardDescription>
       </CardHeader>
@@ -182,47 +204,35 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
             {/* Apply enhanced formatting to summary */}
             {safeReading.summary && !safeReading.summaryLoading && !safeReading.summaryError && (
               <div className="mb-4">
-                <div
-                  className="paro-summary-bullets text-muted-foreground"
-                  dangerouslySetInnerHTML={{
-                    __html: formatSummary(removeCharacterCounts(safeReading.summary)),
-                  }}
-                />
+                <div className="paro-summary-bullets text-muted-foreground">
+                  <h4 className="font-semibold mb-1">Summary</h4>
+                  <p className="mb-3">{safeReading.summary}</p>
 
-                {safeReading.detailedExplanation && (
-                  <Collapsible className="mt-2">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex items-center gap-1 mt-2">
-                        <Info className="h-4 w-4" />
-                        More Information
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2 p-4 bg-muted/50 rounded-md">
-                      <div
-                        className="prose prose-sm max-w-none prose-headings:font-bold prose-p:mb-2 prose-ul:pl-5 prose-li:mb-1"
-                        dangerouslySetInnerHTML={{
-                          __html: formatDetailedExplanation(
-                            removeCharacterCounts(safeReading.detailedExplanation),
-                          ),
-                        }}
-                      />
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
+                  {/* Detailed explanation section with bold heading and clean text */}
+                  {safeReading.detailedExplanation && (
+                    <>
+                      <h4 className="font-semibold mb-1 mt-4">Detailed Explanation</h4>
+                      <p className="mb-2">{safeReading.detailedExplanation}</p>
+                    </>
+                  )}
+                </div>
                 
                 {/* References Section */}
                 {safeReading.citations && safeReading.citations.length > 0 && (
-                  <Collapsible className="mt-2">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex items-center gap-1 mt-2">
-                        <BookOpen className="h-4 w-4" />
-                        View References
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2">
-                      {renderCitations(safeReading.citations)}
-                    </CollapsibleContent>
-                  </Collapsible>
+                  <>
+                    {console.log('Citations available:', safeReading.citations)}
+                    <Collapsible className="mt-2">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="outline" size="sm" className="flex items-center gap-1 mt-2">
+                          <BookOpen className="h-4 w-4" />
+                          View References
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2">
+                        {renderCitations(safeReading.citations)}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </>
                 )}
               </div>
             )}

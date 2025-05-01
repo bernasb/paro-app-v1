@@ -332,6 +332,45 @@ export const formatPsalmForDisplay = (text: string, minChars = 50, maxChars = 65
   return formattedParts.filter((part) => part).join('\n\n');
 };
 
+// --- Function for extracting JSON string content for display ---
+export const extractJsonStringContent = (jsonString: string | undefined): string | undefined => {
+  if (!jsonString) return undefined;
+  
+  // Try to parse the JSON string
+  try {
+    // If it's already a JSON object parsed as a string
+    const parsed = JSON.parse(jsonString);
+    if (typeof parsed === 'object' && parsed !== null) {
+      if (parsed.summary) return parsed.summary;
+      return jsonString; // fallback
+    }
+  } catch (e) {
+    // Not valid JSON, continue with regex extraction
+  }
+
+  // Regular expressions to find common JSON string patterns
+  const stringExtractRegexes = [
+    // Match "summary": "content" pattern
+    /"summary"\s*:\s*"([^"]*)"/,
+    // Match 'summary': 'content' pattern
+    /'summary'\s*:\s*'([^']*)'/,
+    // Match between triple backticks
+    /```(?:json)?[\s\n]*({[\s\S]*?})[\s\n]*```/,
+    // Match anything that looks like JSON
+    /{[\s\S]*}/
+  ];
+
+  for (const regex of stringExtractRegexes) {
+    const match = jsonString.match(regex);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+
+  // If all extraction methods fail, return the original
+  return jsonString;
+};
+
 // --- Your existing functions below ---
 
 // *** REFINED HELPER for Line Breaking (Original for Readings/Gospel) ***

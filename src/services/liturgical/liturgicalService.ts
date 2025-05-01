@@ -434,11 +434,42 @@ export const getReadingSummary = async (reading: {
   
   console.log(`[getReadingSummary] Received summary response:`, result.data);
   
+  // Process the response to extract clean text from JSON if needed
+  const processResponse = (data: any, fieldName: string) => {
+    if (!data) return '';
+    
+    // If it's just a string, return it
+    if (typeof data === 'string') {
+      // If it looks like JSON, try to extract just the content
+      if (data.includes('"summary"') || data.includes('"detailedExplanation"') || data.includes('{') || data.includes('```')) {
+        try {
+          // Try to handle the case where it's a JSON string inside a string
+          // First, remove any markdown code block syntax
+          const cleanJson = data.replace(/^```json\n|```$/g, '');
+          const parsed = JSON.parse(cleanJson);
+          return parsed[fieldName] || data;
+        } catch (e) {
+          // If parsing fails, return the original
+          return data;
+        }
+      }
+      return data;
+    }
+    
+    // If it's already an object with the specified property, return that
+    if (typeof data === 'object' && data !== null && data[fieldName]) {
+      return data[fieldName];
+    }
+    
+    // Fallback
+    return data;
+  };
+  
   // Return summary, detailed explanation (if any), and citations (if any)
   return {
-    summary: result.data.data.summary || '',
+    summary: processResponse(result.data.data.summary, 'summary') || '',
     summaryError: result.data.data.summaryError || '',
-    detailedExplanation: result.data.data.detailedExplanation || '',
+    detailedExplanation: processResponse(result.data.data.detailedExplanation, 'detailedExplanation') || '',
     citations: result.data.data.citations || []
   };
 };

@@ -86,7 +86,7 @@ exports.readingSummaryProxy = (0, https_1.onCall)(async (request) => {
 
   - Summarize ALL readings, including Psalms.
 
-  - Use citations in the format [^n] and provide a references section with full citation details.
+  - Use citations in the format [n] (not [^n]) and provide a references section with full citation details.
 
   - Provide the document IDs or titles for the references used in your previous response and include 
   them in the citations array with the full citation details.
@@ -138,6 +138,7 @@ Citation: ${citation}`
     }
     // 5. Parse the response (match Magisterium API expectations)
     let summary = '';
+    let detailedExplanation = '';
     let citations = [];
     let summaryError = undefined;
     try {
@@ -150,7 +151,28 @@ Citation: ${citation}`
             content = rawText;
             citations = [];
         }
-        summary = content;
+        // Try to parse the content as JSON to extract summary and detailedExplanation
+        try {
+            // First remove any code block formatting
+            const cleanedContent = content.replace(/^```json\s*|```\s*$/g, '');
+            const parsedContent = JSON.parse(cleanedContent);
+            // Extract the fields
+            summary = parsedContent.summary || '';
+            detailedExplanation = parsedContent.detailedExplanation || '';
+            // Check if there are citations in the parsed content
+            if (parsedContent.citations && Array.isArray(parsedContent.citations)) {
+                citations = parsedContent.citations;
+            }
+            console.log('[readingSummaryProxy] Successfully parsed JSON content:', {
+                summaryLength: summary.length,
+                detailedExplanationLength: detailedExplanation?.length || 0
+            });
+        }
+        catch (jsonError) {
+            console.warn('[readingSummaryProxy] Could not parse as JSON:', jsonError);
+            // If parsing fails, use the raw content as the summary
+            summary = content;
+        }
     }
     catch (err) {
         console.error('[readingSummaryProxy] Error parsing Magisterium response:', err);
@@ -161,5 +183,5 @@ Citation: ${citation}`
         summaryError = 'No summary was generated for this reading. Please try again later or check the API prompt/response.';
         console.warn('[readingSummaryProxy] No summary extracted for:', { title, citation, rawText });
     }
-    return (0, utils_1.successResponse)({ summary, citations, summaryError });
+    return (0, utils_1.successResponse)({ summary, detailedExplanation, citations, summaryError });
 });
