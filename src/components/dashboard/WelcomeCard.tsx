@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 export function WelcomeCard() {
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState('');
+  const [userDisplayName, setUserDisplayName] = useState(() => {
+    return localStorage.getItem('userDisplayName') || '';
+  });
 
   useEffect(() => {
     // Set greeting based on time of day
@@ -40,13 +43,23 @@ export function WelcomeCard() {
     formatTime();
     const interval = setInterval(formatTime, 1000);
 
-    return () => clearInterval(interval);
+    // Listen for changes to userDisplayName in localStorage (e.g., from Settings)
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'userDisplayName') {
+        setUserDisplayName(event.newValue || '');
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   return (
     <Card className="bg-gradient-to-br from-clergy-primary/90 to-clergy-secondary/90 text-white border-none shadow-lg">
       <CardHeader className="pb-2">
-        <CardTitle className="text-2xl font-bold">{greeting}, Father</CardTitle>
+        <CardTitle className="text-2xl font-bold">{greeting}, {userDisplayName || 'Father'}</CardTitle>
         <CardDescription className="text-white/80">{currentTime}</CardDescription>
       </CardHeader>
       <CardContent>

@@ -44,9 +44,9 @@ const CUSTOM_STATIONS_KEY = 'custom_radio_stations';
 const resources = [
   {
     id: 1,
-    title: 'Vatican Documents',
-    description: 'Official documents from the Holy See',
-    url: 'https://www.vatican.va/content/vatican/en.html',
+    title: 'DigiVatLib',
+    description: 'Searchable Digital Vatican Library Documents',
+    url: 'https://digi.vatlib.it/',
   },
   {
     id: 2,

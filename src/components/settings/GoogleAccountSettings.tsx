@@ -33,14 +33,15 @@ const GoogleAccountSettings = ({
       <CardContent className="space-y-4">
         {isAuthenticated ? (
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-medium">Connected Account</p>
-                <p className="text-sm text-muted-foreground">{userEmail}</p>
-              </div>
-              <Button variant="outline" onClick={logout} className="gap-2">
+            <div className="space-y-2">
+              <p className="font-medium">Connected Account</p>
+              <p className="text-sm text-muted-foreground">{userEmail}</p>
+              <Button
+                onClick={logout}
+                className="w-[2in] gap-2 mt-2 bg-clergy-primary hover:bg-clergy-primary/90 text-white justify-center items-center"
+              >
                 <LogOut size={16} />
-                Disconnect
+                Disconnect Account
               </Button>
             </div>
 
