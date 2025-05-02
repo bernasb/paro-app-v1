@@ -3,8 +3,8 @@
 export * from '../../types/magisterium'; // Export common types
 
 // Export functions from liturgicalService
-// Export getDailyMassReadings instead of getVerseOfTheDay
-export { getDailyMassReadings, getLiturgicalEvents } from './liturgicalService';
+// Export only Magisterium/AI-based helpers (no Universalis)
+export { getLiturgicalEvents } from './liturgicalService';
 
 // Export functions from prayersService (assuming it exists or will be created)
 // export * from './prayersService';

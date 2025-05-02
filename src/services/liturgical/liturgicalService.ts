@@ -1,3 +1,5 @@
+// Universalis/JSONP logic has been fully removed from the codebase. All readings now use Magisterium API.
+
 import {
   getFunctions,
   httpsCallable,
