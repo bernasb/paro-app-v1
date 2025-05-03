@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { db } from '@/integrations/firebase/client';
-import { collection, getDocs, doc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getLiturgicalContext, getCurrentDateTimeInfo, findNextSpecialDay } from '@/utils/liturgical/calapi';
 import { format, parseISO } from 'date-fns';
 
@@ -64,20 +64,34 @@ export function WelcomeCard() {
     // Fetch next special day
     findNextSpecialDay(now, 30).then(setNextSpecialDay).catch(() => setNextSpecialDay(null));
 
-    // Fetch a random quote from Firestore, but only once per day
+    // Fetch a daily quote from Firestore for today, or fallback to random quote
     const fetchDailyQuote = async () => {
       const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      console.log('[DashboardQuote] Today key:', today);
       const saved = localStorage.getItem('dashboardQuote');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           if (parsed.date === today && parsed.text) {
             setQuote(parsed.text);
+            console.log('[DashboardQuote] Loaded from localStorage:', parsed.text);
             return;
           }
         } catch {}
       }
       try {
+        // Try to fetch a date-specific quote first
+        const quoteDocRef = doc(db, 'dashboardQuotes', today);
+        const quoteDocSnap = await getDoc(quoteDocRef);
+        console.log('[DashboardQuote] Firestore doc exists:', quoteDocSnap.exists());
+        if (quoteDocSnap.exists()) {
+          const data = quoteDocSnap.data();
+          console.log('[DashboardQuote] Firestore data:', data);
+          setQuote(data.text);
+          localStorage.setItem('dashboardQuote', JSON.stringify({ date: today, text: data.text }));
+          return;
+        }
+        // Otherwise, fallback to random quote
         const quotesCol = collection(db, 'dashboardQuotes');
         const quoteDocs = await getDocs(quotesCol);
         const quoteArr = quoteDocs.docs.map(doc => doc.data().text).filter(Boolean);
@@ -89,7 +103,8 @@ export function WelcomeCard() {
         }
         setQuote(chosen);
         localStorage.setItem('dashboardQuote', JSON.stringify({ date: today, text: chosen }));
-      } catch {
+      } catch (err) {
+        console.error('[DashboardQuote] Error fetching quote:', err);
         setQuote('"Let us love, since that is what our hearts were made for." – St. Thérèse of Lisieux');
       }
     };
