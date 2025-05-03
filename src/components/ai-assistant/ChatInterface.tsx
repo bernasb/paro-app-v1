@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { MessageList } from '@/components/ai-assistant/MessageList';
 import { MessageInput } from '@/components/ai-assistant/MessageInput';
 import { Message } from '@/types/ai-assistant';
@@ -24,12 +24,7 @@ export function ChatInterface({
     <Card className="min-h-[600px] flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-2xl">Magisterium AI Assistant</CardTitle>
-            <CardDescription className="text-lg">
-              Ask theological questions and get AI-powered assistance
-            </CardDescription>
-          </div>
+          {/* Removed redundant title and description per user request */}
         </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">

@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Book, Info, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useNavigate } from 'react-router-dom';
 // Import specific formatters needed here
 import {
   formatPsalmContentStructured,
@@ -136,6 +137,15 @@ const renderCitations = (citations: any[]) => {
                     >
                       Source
                     </a>
+                    {/* Tooltip style button for reading reference */}
+                    <button
+                      type="button"
+                      className="ml-1 p-1 rounded-full bg-background border border-border text-clergy-primary hover:bg-clergy-primary/10 focus:outline-none focus:ring-2 focus:ring-clergy-primary"
+                      title="Open reference in Bible Gateway"
+                      // onClick handler intentionally left out for now
+                    >
+                      <BookOpen className="h-4 w-4" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -148,6 +158,7 @@ const renderCitations = (citations: any[]) => {
 };
 
 export const ReadingCard = ({ reading }: ReadingCardProps) => {
+  const navigate = useNavigate();
   // Determine if the summary should be shown
   const showSummary =
     reading.summary !== undefined &&
@@ -187,7 +198,23 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
           <Book className="h-5 w-5 text-clergy-primary" />
           {fullTitle}
         </CardTitle>
-        <CardDescription>{formattedCitation}</CardDescription>
+        <div className="flex items-center gap-2 mt-1">
+          <CardDescription>{formattedCitation}</CardDescription>
+          {/* Tooltip style button for reading reference */}
+          {formattedCitation && (
+            <button
+              type="button"
+              className="ml-1 p-1 rounded-full bg-background border border-border text-clergy-primary hover:bg-clergy-primary/10 focus:outline-none focus:ring-2 focus:ring-clergy-primary"
+              title="Ask AI Assistant for in-depth analysis"
+              onClick={() => {
+                const prefill = `may I have a more in depth analysis of ${formattedCitation}`;
+                navigate(`/ai-assistant?prefill=${encodeURIComponent(prefill)}`);
+              }}
+            >
+              <BookOpen className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {/* Summary Section */}

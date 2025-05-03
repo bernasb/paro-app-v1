@@ -65,7 +65,7 @@ exports.readingSummaryProxy = (0, https_1.onCall)(async (request) => {
   or add summaries of other readings from the same day).
 
   - For any First through Sixth readings, Canticles, or Epistles encountered (which will vary
-  through the liturgical year), compose one short, comprehensive paragraph explaining how the 
+  through the liturgical year), compose one short and brief paragraph explaining how the 
   reading provides context and background for understanding God's plan of salvation throughout history, what 
   the practical faith takeaway message is for Catholics, and how Catholics can practice, 
   consider or apply its message in daily life.  Limit your entire explanation to one 

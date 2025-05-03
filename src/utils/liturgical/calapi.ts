@@ -179,3 +179,43 @@ export function getCurrentDateTimeInfo() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return { now, iso, local, tz };
 }
+
+/**
+ * Find the next special liturgical day (Sunday, Solemnity, Feast) after a given start date.
+ * @param startDate Date to start searching *after*
+ * @param maxDays Maximum number of days to look ahead (default 30)
+ * @param lang Language for CalAPI (default 'en')
+ * @param calendar Calendar for CalAPI (default 'default')
+ * @returns Promise<{ date: string, name: string, type: string } | null>
+ */
+export async function findNextSpecialDay(
+  startDate: Date,
+  maxDays: number = 30,
+  lang: string = 'en',
+  calendar: string = 'default'
+): Promise<{ date: string; name: string; type: string } | null> {
+  for (let i = 1; i <= maxDays; i++) {
+    const checkDate = new Date(startDate);
+    checkDate.setDate(startDate.getDate() + i);
+    try {
+      const context = await getLiturgicalContext(checkDate, lang, calendar);
+      const type = context.liturgical_details?.type || 'Unknown';
+      const name = context.liturgical_day || 'Unknown Special Day';
+      // Criteria: Sunday, Solemnity, Feast, or Feast of the Lord
+      const isSunday = context.liturgical_details?.weekday === 'sunday';
+      const isSolemnity = type === 'Solemnity';
+      const isFeast = type === 'Feast' || type === 'Feast of the Lord';
+      if (isSunday || isSolemnity || isFeast) {
+        return {
+          date: context.date,
+          name,
+          type,
+        };
+      }
+    } catch (err) {
+      // If CalAPI fails for a day, skip to next day
+      continue;
+    }
+  }
+  return null;
+}

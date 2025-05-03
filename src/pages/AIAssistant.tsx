@@ -82,31 +82,41 @@ const AIAssistant = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-4 px-4 pt-4 md:px-6 md:pt-6">
-        <h1 className="text-2xl font-semibold">AI Assistant</h1>
-        <div className="flex space-x-2">
-          {/* Save Chat Button with Text */}
-          <Button variant="outline" onClick={saveChat} aria-label="Save chat">
-            <Save className="h-4 w-4 mr-2" />
-            Save Chat
-          </Button>
-          {/* Clear Chat Button with Text */}
-          <Button variant="outline" onClick={clearChat} aria-label="Clear chat">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear Chat
-          </Button>
+    <div className="space-y-6 p-4 md:p-6 h-full animate-fade-in">
+      {/* Sticky Header with Blur Padding Above/Below - MATCHED TO MASS READINGS */}
+      <div className="sticky top-0 z-30">
+        {/* Blur above header */}
+        <div className="absolute left-0 right-0 -top-6 h-6 bg-background/80 backdrop-blur-md pointer-events-none" />
+        {/* Header container */}
+        <div className="relative flex flex-row items-center justify-between mb-4 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 border-b border-border pb-2 px-2">
+          <h1 className="text-2xl font-bold flex items-center">
+            AI Assistant
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={saveChat} aria-label="Save chat">
+              <Save className="h-4 w-4 mr-2" />
+              Save Chat
+            </Button>
+            <Button variant="outline" onClick={clearChat} aria-label="Clear chat">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear Chat
+            </Button>
+          </div>
         </div>
+        {/* Blur below header */}
+        <div className="absolute left-0 right-0 -bottom-6 h-6 bg-background/80 backdrop-blur-md pointer-events-none" />
       </div>
-      {/* Removed conditional rendering - Always show ChatInterface */}
-      <ChatInterface
-        messages={messages}
-        isProcessing={isProcessing}
-        onSendMessage={sendMessage}
-        onRelatedQuestionClick={handleRelatedQuestionClick}
-        onVoiceQuery={startListening}
-        isListening={isListening}
-      />
+      {/* Main chat area scrolls independently under sticky header */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <ChatInterface
+          messages={messages}
+          isProcessing={isProcessing}
+          onSendMessage={sendMessage}
+          onRelatedQuestionClick={handleRelatedQuestionClick}
+          onVoiceQuery={startListening}
+          isListening={isListening}
+        />
+      </div>
     </div>
   );
 };

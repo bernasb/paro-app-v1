@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useVoice } from '@/contexts/VoiceContext';
 import { useGoogleAuth } from '@/contexts/GoogleAuthContext'; // Import the auth hook
+import { useLocation } from 'react-router-dom';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
@@ -14,6 +15,16 @@ export const MessageInput = ({ onSendMessage, isProcessing }: MessageInputProps)
   const [input, setInput] = useState('');
   const { isListening, startListening } = useVoice();
   const { isAuthenticated, loading: authLoading } = useGoogleAuth(); // Get auth state
+  const location = useLocation();
+
+  // Prefill input from query param if present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const prefill = params.get('prefill');
+    if (prefill) {
+      setInput(prefill);
+    }
+  }, [location.search]);
 
   // Determine if the input should be disabled
   const isDisabled = isProcessing || authLoading || !isAuthenticated;

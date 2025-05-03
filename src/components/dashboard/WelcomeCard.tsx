@@ -2,7 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useState, useEffect } from 'react';
 import { db } from '@/integrations/firebase/client';
 import { collection, getDocs, doc } from 'firebase/firestore';
-import { getLiturgicalContext, getCurrentDateTimeInfo } from '@/utils/liturgical/calapi';
+import { getLiturgicalContext, getCurrentDateTimeInfo, findNextSpecialDay } from '@/utils/liturgical/calapi';
+import { format, parseISO } from 'date-fns';
 
 function capitalizeFirst(str: string) {
   if (!str) return str;
@@ -18,6 +19,7 @@ export function WelcomeCard() {
   const [quote, setQuote] = useState<string | null>(null);
   const [liturgicalContext, setLiturgicalContext] = useState<any | null>(null);
   const [tz, setTz] = useState('');
+  const [nextSpecialDay, setNextSpecialDay] = useState<{ date: string; name: string; type: string } | null>(null);
 
   useEffect(() => {
     // Set greeting based on time of day
@@ -58,6 +60,9 @@ export function WelcomeCard() {
     const { now, tz: timezone } = getCurrentDateTimeInfo();
     setTz(timezone);
     getLiturgicalContext(now).then(setLiturgicalContext).catch(() => setLiturgicalContext(null));
+
+    // Fetch next special day
+    findNextSpecialDay(now, 30).then(setNextSpecialDay).catch(() => setNextSpecialDay(null));
 
     // Fetch a random quote from Firestore, but only once per day
     const fetchDailyQuote = async () => {
@@ -127,6 +132,14 @@ export function WelcomeCard() {
             {liturgicalContext ? (
               <>
                 Liturgical Day: {liturgicalContext.liturgical_day || '—'}
+                {nextSpecialDay && (
+                  <>
+                    <br />
+                    <span className="text-center text-base text-white/60 font-normal">
+                      Next special day: {nextSpecialDay.name} ({nextSpecialDay.type}) on {format(parseISO(nextSpecialDay.date), 'MMMM do')}
+                    </span>
+                  </>
+                )}
               </>
             ) : (
               'Loading liturgical day...'
