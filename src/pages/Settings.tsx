@@ -10,7 +10,6 @@ const Settings = () => {
   const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(true);
   const [calendarSyncEnabled, setCalendarSyncEnabled] = useState(true);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(true);
   const [userDisplayName, setUserDisplayName] = useState(() => {
     // Try to load from localStorage for persistence
     return localStorage.getItem('userDisplayName') || '';
@@ -38,8 +37,6 @@ const Settings = () => {
       />
 
       <GeneralSettings
-        darkModeEnabled={darkModeEnabled}
-        setDarkModeEnabled={setDarkModeEnabled}
         voiceCommandsEnabled={voiceCommandsEnabled}
         setVoiceCommandsEnabled={setVoiceCommandsEnabled}
         userDisplayName={userDisplayName}

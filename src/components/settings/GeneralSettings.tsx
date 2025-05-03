@@ -6,8 +6,6 @@ import { useVoice } from '@/contexts/VoiceContext';
 import { Mic, Settings as SettingsIcon } from 'lucide-react';
 
 interface GeneralSettingsProps {
-  darkModeEnabled: boolean;
-  setDarkModeEnabled: (enabled: boolean) => void;
   voiceCommandsEnabled: boolean;
   setVoiceCommandsEnabled: (enabled: boolean) => void;
   userDisplayName: string;
@@ -15,8 +13,6 @@ interface GeneralSettingsProps {
 }
 
 const GeneralSettings = ({
-  darkModeEnabled,
-  setDarkModeEnabled,
   voiceCommandsEnabled,
   setVoiceCommandsEnabled,
   userDisplayName,
@@ -44,13 +40,13 @@ const GeneralSettings = ({
               <input
                 id="display-name"
                 type="text"
-                className={`input input-bordered w-96 px-3 py-2 rounded border border-gray-300 focus:outline-none transition-all duration-200 ${darkModeEnabled ? 'bg-gray-800 text-white border-gray-600 placeholder-gray-400' : 'bg-white text-black'}`}
+                className="input input-bordered w-96 px-3 py-2 rounded border border-gray-600 focus:outline-none transition-all duration-200 bg-gray-800 text-white placeholder-gray-400"
                 value={userDisplayName}
                 onChange={e => setUserDisplayName(e.target.value)}
                 placeholder="Your preferred name"
               />
               {userDisplayName && (
-                <div className={`mt-2 px-3 py-2 rounded shadow text-base font-semibold inline-block ${darkModeEnabled ? 'bg-gray-900 text-white border border-gray-700' : 'bg-gray-100 text-gray-900 border border-gray-300'}`}>
+                <div className="mt-2 px-3 py-2 rounded shadow text-base font-semibold inline-block bg-gray-900 text-white border border-gray-700">
                   {userDisplayName}
                 </div>
               )}
@@ -59,12 +55,6 @@ const GeneralSettings = ({
 
           {/* Settings Switches, stacked with slider below description */}
           <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label htmlFor="dark-mode">Dark Mode</Label>
-              <p className="text-sm text-muted-foreground">Use dark theme across the application</p>
-              <Switch id="dark-mode" checked={darkModeEnabled} onCheckedChange={setDarkModeEnabled} />
-            </div>
-
             <div className="space-y-2 pt-2">
               <Label className="flex items-center gap-2" htmlFor="voice-commands">
                 <Mic className="h-4 w-4 text-clergy-primary" />
