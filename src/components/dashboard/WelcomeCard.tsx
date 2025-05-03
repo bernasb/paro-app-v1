@@ -68,33 +68,42 @@ export function WelcomeCard() {
     const fetchDailyQuote = async () => {
       const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
       console.log('[DashboardQuote] Today key:', today);
+      let localQuote: string | null = null;
       const saved = localStorage.getItem('dashboardQuote');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           if (parsed.date === today && parsed.text) {
-            setQuote(parsed.text);
-            console.log('[DashboardQuote] Loaded from localStorage:', parsed.text);
-            return;
+            localQuote = parsed.text;
           }
         } catch {}
       }
       try {
-        // Try to fetch a date-specific quote first
+        // Always try to fetch a date-specific quote from Firestore
         const quoteDocRef = doc(db, 'dashboardQuotes', today);
         const quoteDocSnap = await getDoc(quoteDocRef);
         console.log('[DashboardQuote] Firestore doc exists:', quoteDocSnap.exists());
         if (quoteDocSnap.exists()) {
           const data = quoteDocSnap.data();
-          console.log('[DashboardQuote] Firestore data:', data);
+          if (!localQuote || data.text !== localQuote) {
+            // Only update localStorage if quote is new or changed
+            localStorage.setItem('dashboardQuote', JSON.stringify({ date: today, text: data.text }));
+          }
           setQuote(data.text);
-          localStorage.setItem('dashboardQuote', JSON.stringify({ date: today, text: data.text }));
           return;
         }
-        // Otherwise, fallback to random quote
+        // Otherwise, fallback to localStorage cached quote if available
+        if (localQuote) {
+          setQuote(localQuote);
+          return;
+        }
+        // Otherwise, fallback to random quote (only those with random: true)
         const quotesCol = collection(db, 'dashboardQuotes');
         const quoteDocs = await getDocs(quotesCol);
-        const quoteArr = quoteDocs.docs.map(doc => doc.data().text).filter(Boolean);
+        const quoteArr = quoteDocs.docs
+          .filter(doc => doc.data().random === true)
+          .map(doc => doc.data().text)
+          .filter(Boolean);
         let chosen = '';
         if (quoteArr.length > 0) {
           chosen = quoteArr[Math.floor(Math.random() * quoteArr.length)];
@@ -105,7 +114,12 @@ export function WelcomeCard() {
         localStorage.setItem('dashboardQuote', JSON.stringify({ date: today, text: chosen }));
       } catch (err) {
         console.error('[DashboardQuote] Error fetching quote:', err);
-        setQuote('"Let us love, since that is what our hearts were made for." – St. Thérèse of Lisieux');
+        // Fallback to localStorage cached quote if available
+        if (localQuote) {
+          setQuote(localQuote);
+        } else {
+          setQuote('"Let us love, since that is what our hearts were made for." – St. Thérèse of Lisieux');
+        }
       }
     };
     fetchDailyQuote();
@@ -123,6 +137,20 @@ export function WelcomeCard() {
     };
   }, []);
 
+  // Liturgical color mapping utility
+  const LITURGICAL_COLOR_MAP: Record<string, string> = {
+    white: '#ffffff',
+    red: '#c0392b',
+    green: '#27ae60',
+    purple: '#8e44ad',
+    violet: '#8e44ad',
+    rose: '#e17055',
+    pink: '#e17055',
+    black: '#222f3e',
+    gold: '#f9ca24',
+    blue: '#2980b9',
+  };
+
   return (
     <Card className="bg-gradient-to-br from-clergy-primary/90 to-clergy-secondary/90 text-white border-none shadow-lg">
       <CardHeader className="pb-2 flex flex-row justify-between items-start">
@@ -132,7 +160,6 @@ export function WelcomeCard() {
           <CardDescription className="text-white/80">{currentTime}</CardDescription>
           {liturgicalContext && (
             <>
-              <div><span className="font-semibold">Season:</span> {liturgicalContext.liturgical_details.season.charAt(0).toUpperCase() + liturgicalContext.liturgical_details.season.slice(1)} (Week {liturgicalContext.liturgical_details.season_week})</div>
               <div><span className="font-semibold">Sunday Cycle:</span> {liturgicalContext.cycles.sunday_cycle}</div>
               <div><span className="font-semibold">Weekday Cycle:</span> {liturgicalContext.cycles.weekday_cycle}</div>
             </>
@@ -165,10 +192,102 @@ export function WelcomeCard() {
         <div className="flex flex-col items-end min-w-[210px]">
           {liturgicalContext && liturgicalContext.liturgical_details.celebrations[0] && (
             <div>
-              <div className="font-semibold">Celebration Details:</div>
-              <div><span className="font-semibold">Color:</span> {capitalizeFirst(liturgicalContext.liturgical_details.celebrations[0].colour)}</div>
-              <div><span className="font-semibold">Rank:</span> {capitalizeFirst(liturgicalContext.liturgical_details.celebrations[0].rank)}</div>
-              <div><span className="font-semibold">Rank Number:</span> {liturgicalContext.liturgical_details.celebrations[0].rank_num}</div>
+              {/* Move Season above color/rank/rank number for better balance */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <span className="font-semibold">Season:</span>
+                <span>{liturgicalContext.liturgical_details.season.charAt(0).toUpperCase() + liturgicalContext.liturgical_details.season.slice(1)} (Week {liturgicalContext.liturgical_details.season_week})</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="font-semibold">Color:</span>
+                <span>{capitalizeFirst(liturgicalContext.liturgical_details.celebrations[0].colour)}</span>
+                {(() => {
+                  const colour = liturgicalContext.liturgical_details.celebrations[0].colour?.toLowerCase();
+                  const colorHex = LITURGICAL_COLOR_MAP[colour] || '#cccccc';
+                  return (
+                    <>
+                      <span
+                        title={colour}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 16,
+                          height: 16,
+                          borderRadius: '50%',
+                          backgroundColor: colorHex,
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.10)',
+                          marginLeft: 2,
+                        }}
+                      />
+                      <span
+                        title="Liturgical color: Indicates the vestment color for today's celebration. White: feasts of the Lord, saints who were not martyrs, etc. Red: martyrs, Holy Spirit, etc. Green: Ordinary Time. Purple: Advent/Lent. Rose: Gaudete/Laetare Sundays. Black: funerals. Gold/Blue: special cases."
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginLeft: 4,
+                          cursor: 'pointer',
+                          color: '#fff',
+                          background: '#8886',
+                          borderRadius: '50%',
+                          width: 18,
+                          height: 18,
+                          fontWeight: 'bold',
+                          fontSize: 13,
+                          verticalAlign: 'middle',
+                        }}
+                        aria-label="Liturgical color info"
+                      >i</span>
+                    </>
+                  );
+                })()}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="font-semibold">Rank:</span>
+                <span>{capitalizeFirst(liturgicalContext.liturgical_details.celebrations[0].rank)}</span>
+                <span
+                  title="Rank: Indicates the importance of the liturgical celebration. Examples: Solemnity (highest), Feast, Memorial, Optional Memorial, Feria (weekday). Higher ranks override lower ones."
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginLeft: 4,
+                    cursor: 'pointer',
+                    color: '#fff',
+                    background: '#8886',
+                    borderRadius: '50%',
+                    width: 18,
+                    height: 18,
+                    fontWeight: 'bold',
+                    fontSize: 13,
+                    verticalAlign: 'middle',
+                  }}
+                  aria-label="Liturgical rank info"
+                >i</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="font-semibold">Rank Number:</span>
+                <span>{liturgicalContext.liturgical_details.celebrations[0].rank_num}</span>
+                <span
+                  title="Rank Number: A numerical value indicating the precedence of the celebration. Lower numbers are higher priority (e.g., 1.1 = Solemnity of Easter, 2.7 = Feast of an Apostle, etc.). Used to determine which celebration is observed if more than one falls on the same day."
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginLeft: 4,
+                    cursor: 'pointer',
+                    color: '#fff',
+                    background: '#8886',
+                    borderRadius: '50%',
+                    width: 18,
+                    height: 18,
+                    fontWeight: 'bold',
+                    fontSize: 13,
+                    verticalAlign: 'middle',
+                  }}
+                  aria-label="Liturgical rank number info"
+                >i</span>
+              </div>
             </div>
           )}
         </div>
