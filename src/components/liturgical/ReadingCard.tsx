@@ -87,6 +87,11 @@ const renderFormattedContent = (reading: LiturgicalReading) => {
   }
 };
 
+// Helper function to strip [n] citations from text
+function stripCitations(text: string): string {
+  return text.replace(/\s*\[\d+\]/g, '');
+}
+
 // Helper function to render a list of citations
 const renderCitations = (citations: any[]) => {
   if (!citations || citations.length === 0) return null;
@@ -206,34 +211,16 @@ export const ReadingCard = ({ reading }: ReadingCardProps) => {
               <div className="mb-4">
                 <div className="paro-summary-bullets text-muted-foreground">
                   <div style={{ height: '1em' }} />
-                  <p className="mb-3">{safeReading.summary}</p>
+                  <p className="mb-3">{stripCitations(safeReading.summary)}</p>
 
                   {/* Detailed explanation section with spacing only */}
                   {safeReading.detailedExplanation && (
                     <>
                       <div style={{ height: '1em' }} />
-                      <p className="mb-2">{safeReading.detailedExplanation}</p>
+                      <p className="mb-2">{stripCitations(safeReading.detailedExplanation)}</p>
                     </>
                   )}
                 </div>
-                
-                {/* References Section */}
-                {safeReading.citations && safeReading.citations.length > 0 && (
-                  <>
-                    {console.log('Citations available:', safeReading.citations)}
-                    <Collapsible className="mt-2">
-                      <CollapsibleTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex items-center gap-1 mt-2">
-                          <BookOpen className="h-4 w-4" />
-                          View References
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-2">
-                        {renderCitations(safeReading.citations)}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </>
-                )}
               </div>
             )}
           </>

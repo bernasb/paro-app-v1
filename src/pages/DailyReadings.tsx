@@ -160,55 +160,54 @@ const DailyReadings = () => {
   return (
     // Main container with padding
     <div className="space-y-6 p-4 md:p-6">
-      {/* Flex container for Calendar Button and Title */}
-      <div className="flex flex-row items-center justify-between mb-4">
-        {' '}
-        {/* Add justify-between back */}
-        {/* Add a title where the old card title was */}
-        <h1 className="text-2xl font-bold flex items-center">
-          <Book className="mr-2 h-6 w-6 text-clergy-primary" />
-          Daily Mass Readings
-        </h1>
-        {/* New div to group buttons */}
-        <div className="flex items-center gap-4">
-          {' '}
-          {/* Change gap-2 to gap-4 */}
-          <Button
-            variant="outline"
-            className={cn('gap-2')} // Keep margins removed
-            onClick={() => {
-              const formattedDate = format(selectedDate, 'MMddyy');
-              const usccbUrl = `https://bible.usccb.org/bible/readings/${formattedDate}.cfm`;
-              window.open(usccbUrl, '_blank');
-            }}
-          >
-            View Mass Readings
-          </Button>
-          {/* Calendar Popover Button */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={'outline'}
-                className={cn(
-                  // Remove ml-4
-                  'justify-start text-left font-normal',
-                  !selectedDate && 'text-muted-foreground',
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateChange}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+      {/* Sticky Header with Blur Padding Above/Below - FIXED */}
+      <div className="sticky top-0 z-30">
+        {/* Blur above header */}
+        <div className="absolute left-0 right-0 -top-6 h-6 bg-background/80 backdrop-blur-md pointer-events-none" />
+        {/* Header container */}
+        <div className="relative flex flex-row items-center justify-between mb-4 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 border-b border-border pb-2 px-2">
+          <h1 className="text-2xl font-bold flex items-center">
+            <Book className="mr-2 h-6 w-6 text-clergy-primary" />
+            Daily Mass Readings
+          </h1>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              className={cn('gap-2')}
+              onClick={() => {
+                const formattedDate = format(selectedDate, 'MMddyy');
+                const usccbUrl = `https://bible.usccb.org/bible/readings/${formattedDate}.cfm`;
+                window.open(usccbUrl, '_blank');
+              }}
+            >
+              View Mass Readings
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={'outline'}
+                  className={cn(
+                    'justify-start text-left font-normal',
+                    !selectedDate && 'text-muted-foreground',
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateChange}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
+        {/* Blur below header */}
+        <div className="absolute left-0 right-0 -bottom-6 h-6 bg-background/80 backdrop-blur-md pointer-events-none" />
       </div>
 
       {/* Description - moved outside the flex container */}
