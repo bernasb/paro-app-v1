@@ -12,21 +12,20 @@ interface MessageItemProps {
 export const MessageItem = ({ message, onRelatedQuestionClick }: MessageItemProps) => {
   // Clean the content: Use slightly more lenient regex to catch optional leading space
   const markdownComponents = {
-    p: ({ node, ...props }) => <p className="text-sm whitespace-pre-wrap mb-2" {...props} />,
+    p: ({ node, ...props }) => <p className="text-base text-foreground whitespace-pre-wrap mb-2" {...props} />,
     h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-4" {...props} />,
     h2: ({ node, ...props }) => <h2 className="text-xl font-semibold mb-3" {...props} />,
     h3: ({ node, ...props }) => <h3 className="text-lg font-medium mb-2" {...props} />,
-    ul: ({ node, ...props }) => <ul className="list-disc list-inside ml-4 mb-2" {...props} />,
-    ol: ({ node, ...props }) => <ol className="list-decimal list-inside ml-4 mb-2" {...props} />,
-    li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-    a: ({ node, ...props }) => <a className="text-blue-500 hover:underline" {...props} />,
-    strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+    ul: ({ node, ...props }) => <ul className="list-disc list-inside ml-4 mb-2">{props.children}</ul>,
+    ol: ({ node, ...props }) => <ol className="list-decimal list-inside ml-4 mb-2">{props.children}</ol>,
+    li: ({ node, ...props }) => <li className="mb-1 pl-6 -indent-6 whitespace-pre-line">{props.children}</li>,
+    a: ({ node, ...props }) => <a className="text-clergy-primary hover:underline" {...props} />,
+    strong: ({ node, ...props }) => <strong className="font-semibold text-foreground" {...props} />,
     em: ({ node, ...props }) => <em className="italic" {...props} />,
-    // Add more components here for other Markdown elements as needed (e.g., h1, h2, ul, li, etc.)
   };
   const cleanedContent =
     !message.isLoading && message.content
-      ? message.content.replace(/\s?\[\^\d+\]/g, '').trim() // Regex updated here
+      ? message.content.replace(/\s?\[\^\d+\]/g, '').trim()
       : message.content;
 
   return (
@@ -41,13 +40,13 @@ export const MessageItem = ({ message, onRelatedQuestionClick }: MessageItemProp
 
         {/* Message Bubble */}
         <div
-          className={`max-w-[60%] p-3 rounded-lg ${
-            message.role === 'user' ? 'bg-clergy-primary text-primary-foreground' : 'bg-accent'
-          }`}
+          className={`max-w-[70%] p-4 rounded-2xl shadow-sm border
+            ${message.role === 'user' ? 'bg-clergy-primary text-primary-foreground border-clergy-primary' : 'bg-background text-foreground border-border'}
+          `}
         >
           {/* Display loading or cleaned content */}
           {message.isLoading ? (
-            <div className="flex items-center justify-center text-sm text-muted-foreground">
+            <div className="flex items-center justify-center text-base text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
               Thinking...
             </div>
@@ -57,7 +56,7 @@ export const MessageItem = ({ message, onRelatedQuestionClick }: MessageItemProp
 
           {/* Timestamp (hide if loading) */}
           {!message.isLoading && (
-            <div className="text-xs opacity-70 mt-1">
+            <div className="text-xs opacity-70 mt-1 text-right">
               {message.timestamp.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
