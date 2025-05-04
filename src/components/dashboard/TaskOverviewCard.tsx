@@ -84,23 +84,41 @@ export function TaskOverviewCard() {
                     <Label htmlFor={`urgent-overview-${task.id}`} className="text-xs text-left">
                       Urgent
                     </Label>
-                    <Checkbox
-                      id={`urgent-overview-${task.id}`}
-                      checked={task.urgent}
-                      className="h-4 w-4 data-[state=checked]:bg-destructive"
-                      disabled
-                    />
+                    <div className="relative">
+                      <Checkbox
+                        id={`urgent-overview-${task.id}`}
+                        checked={task.urgent}
+                        className="h-4 w-4 data-[state=checked]:bg-transparent opacity-0"
+                        disabled
+                      />
+                      {task.urgent && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none border border-primary rounded-sm w-4 h-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <Label htmlFor={`important-overview-${task.id}`} className="text-xs text-left">
                       Important
                     </Label>
-                    <Checkbox
-                      id={`important-overview-${task.id}`}
-                      checked={task.important}
-                      className="h-4 w-4 data-[state=checked]:bg-clergy-secondary"
-                      disabled
-                    />
+                    <div className="relative">
+                      <Checkbox
+                        id={`important-overview-${task.id}`}
+                        checked={task.important}
+                        className="h-4 w-4 data-[state=checked]:bg-transparent opacity-0"
+                        disabled
+                      />
+                      {task.important && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none border border-primary rounded-sm w-4 h-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

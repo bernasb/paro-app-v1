@@ -49,14 +49,14 @@ const navItems = [
     icon: Home,
   },
   {
-    name: 'Calendar',
-    path: '/calendar',
-    icon: Calendar,
+    name: 'Mass Readings',
+    path: '/daily-readings',
+    icon: Book,
   },
   {
-    name: 'Tasks',
-    path: '/tasks',
-    icon: CheckSquare,
+    name: 'AI Assistant',
+    path: '/ai-assistant',
+    icon: BotIcon,
   },
   {
     name: 'Email',
@@ -69,34 +69,19 @@ const navItems = [
     icon: Cross,
   },
   {
-    name: 'Mass Readings',
-    path: '/daily-readings',
-    icon: Book,
-  },
-  {
-    name: 'AI Assistant',
-    path: '/ai-assistant',
-    icon: BotIcon,
-  },
-  {
-    name: 'Liturgical Events',
-    path: '/liturgical-events',
-    icon: Circle,
-  },
-  {
-    name: 'Saints & History',
-    path: '/saints-history',
-    icon: User,
-  },
-  {
-    name: 'Catholic Prayers',
-    path: '/catholic-prayers',
-    icon: Book,
-  },
-  {
     name: 'Resources',
     path: '/resources',
     icon: Radio,
+  },
+  {
+    name: 'Calendar',
+    path: '/calendar',
+    icon: Calendar,
+  },
+  {
+    name: 'Tasks',
+    path: '/tasks',
+    icon: CheckSquare,
   },
   {
     name: 'Settings',

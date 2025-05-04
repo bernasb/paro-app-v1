@@ -35,6 +35,13 @@ const defaultRadioStations = [
     url: 'https://thestationofthecross.com/stations/icatholicradio/',
     streamUrl: 'https://thestationofthecross.com/sonaar-audio-player/',
   },
+  {
+    id: 5,
+    name: 'Classical Catholic',
+    description: 'Gregorian chant, Catholic hymns, and classical masterpieces',
+    url: 'https://classicalliberalarts.com/radio/',
+    streamUrl: 'https://live365.com/station/Classical-Catholic-Radio-a64105',
+  },
 ];
 
 // Custom station slots (2 max)
