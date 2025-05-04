@@ -64,7 +64,7 @@ const navItems = [
     icon: Mail,
   },
   {
-    name: 'Vatican News',
+    name: 'Catholic News',
     path: '/vatican-news',
     icon: Cross,
   },

@@ -15,6 +15,7 @@ interface RSSItem {
   pubDate: string;
   description: string;
   source: string;
+  image: string;
 }
 
 // Type for RSS feed configuration
@@ -91,28 +92,72 @@ const VaticanNews = () => {
             throw new Error(`Failed to fetch feed from ${config.name}`);
           }
 
-          // Parse XML content
+          // Handle AllOrigins base64 data URI (if present, any charset)
+          const base64Match = data.contents.match(/^data:application\/rss\+xml;\s*charset=[^;]+;base64,/i);
+          if (base64Match) {
+            const base64Prefix = base64Match[0];
+            const base64 = data.contents.slice(base64Prefix.length);
+            // Decode base64 to UTF-8 string
+            const binaryString = atob(base64);
+            const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+            data.contents = new TextDecoder('utf-8').decode(bytes);
+          }
+
+          // Debug: log first 500 chars of XML string for each feed
+          console.log(`Raw XML for ${config.name}:`, data.contents.slice(0, 500));
+
+          // Parse the XML
           const parser = new DOMParser();
           const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
 
           // Extract items
           const items = xmlDoc.querySelectorAll('item');
-          const parsedItems: RSSItem[] = [];
+          let parsedItems: RSSItem[] = [];
 
           items.forEach((item) => {
             const title = item.querySelector('title')?.textContent || 'No Title';
             const link = item.querySelector('link')?.textContent || '#';
             const pubDate = item.querySelector('pubDate')?.textContent || '';
-            const description = item.querySelector('description')?.textContent || '';
-
+            // Prefer <content:encoded> over <description>
+            let description = '';
+            const contentEncoded = item.getElementsByTagName('content:encoded')[0];
+            if (contentEncoded && contentEncoded.textContent) {
+              description = contentEncoded.textContent;
+            } else {
+              description = item.querySelector('description')?.textContent || '';
+            }
+            // Optionally extract image from <media:content>
+            let image = '';
+            const mediaContent = item.getElementsByTagName('media:content')[0];
+            if (mediaContent && mediaContent.getAttribute('url')) {
+              image = mediaContent.getAttribute('url');
+            } else {
+              // Try to extract first <img> from <description>
+              const descHtml = item.querySelector('description')?.textContent || '';
+              const tmpDiv = document.createElement('div');
+              tmpDiv.innerHTML = descHtml;
+              const imgTag = tmpDiv.querySelector('img');
+              if (imgTag && imgTag.src) {
+                image = imgTag.src;
+              }
+            }
             parsedItems.push({
               title,
               link,
               pubDate,
               description,
               source: config.name,
+              image,
             });
           });
+
+          // Limit to 10 most recent articles per feed
+          parsedItems = parsedItems
+            .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+            .slice(0, 10);
+
+          // Debug log for feed parsing
+          console.log(`Parsed items for ${config.name}:`, parsedItems);
 
           return parsedItems;
         } catch (err) {
@@ -180,12 +225,22 @@ const VaticanNews = () => {
     return tmp.textContent || tmp.innerText || '';
   };
 
+  // Utility to get the first N sentences from a string
+  function getFirstNSentences(text: string, n: number): string {
+    // Remove excessive whitespace
+    const clean = text.replace(/\s+/g, ' ').trim();
+    // Split on sentence endings
+    const sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean];
+    const preview = sentences.slice(0, n).join(' ').trim();
+    return sentences.length > n ? preview + '...' : preview;
+  }
+
   return (
     <div className="space-y-6 animate-fade-in p-4 md:p-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold flex items-center">
           <Cross className="mr-2 h-6 w-6 text-clergy-primary" />
-          Vatican News
+          Latest Catholic News
         </h1>
         <Button variant="outline" onClick={refreshFeeds} disabled={loading}>
           {loading ? (
@@ -250,15 +305,22 @@ const VaticanNews = () => {
               </CardHeader>
               <CardContent>
                 <div className="max-w-3xl">
-                  <p className="mb-4 text-pretty leading-relaxed">{stripHtml(item.description)}</p>
+                  <p className="mb-4 text-pretty leading-relaxed">{getFirstNSentences(stripHtml(item.description), 2)}</p>
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-64 object-cover mb-4"
+                    />
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-2"
-                    onClick={() => window.open(item.link, '_blank')}
+                    asChild
                   >
-                    <ExternalLink className="h-4 w-4" />
-                    Read Full Article
+                    <a href={item.link} target="_blank" rel="noopener noreferrer">
+                      Read Full Article
+                    </a>
                   </Button>
                 </div>
               </CardContent>
