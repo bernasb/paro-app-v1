@@ -10,6 +10,7 @@ interface ChatInterfaceProps {
   onRelatedQuestionClick: (question: string) => void;
   onVoiceQuery: () => void; // Added prop for starting voice query
   isListening: boolean; // Added prop for listening state
+  preloadedQuestions?: string[]; // Add prop for preloaded questions
 }
 
 export function ChatInterface({
@@ -19,6 +20,7 @@ export function ChatInterface({
   onRelatedQuestionClick,
   onVoiceQuery, // Added to destructuring
   isListening, // Added to destructuring
+  preloadedQuestions = [], // Add default empty array
 }: ChatInterfaceProps) {
   return (
     <Card className="min-h-[600px] flex flex-col">
@@ -34,6 +36,7 @@ export function ChatInterface({
           isProcessing={isProcessing}
           onVoiceQuery={onVoiceQuery} // Pass prop down
           isListening={isListening} // Pass prop down
+          preloadedQuestions={preloadedQuestions} // Pass preloaded questions to MessageInput
         />
       </CardContent>
     </Card>
