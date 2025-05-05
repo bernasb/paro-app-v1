@@ -84,9 +84,9 @@ const RadioSettings = () => {
       <CardHeader className="pb-2">
         <CardTitle className="text-xl flex items-center gap-2">
           <Radio className="h-5 w-5 text-clergy-primary" />
-          Catholic Radio Settings
+          Add Custom Radio Stations
         </CardTitle>
-        <CardDescription>Manage your favorite radio stations</CardDescription>
+        <CardDescription>Manage your favorite custom radio stations for quick access in Resources</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

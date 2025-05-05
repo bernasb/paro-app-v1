@@ -4,6 +4,7 @@ import { Radio, Book, Globe, ExternalLink, Play, Plus, Save } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import QuickLinks from '@/components/QuickLinks';
 
 // Catholic radio stations with player URLs
 const defaultRadioStations = [
@@ -77,9 +78,6 @@ const resources = [
 
 const Resources = () => {
   const [radioStations, setRadioStations] = useState([...defaultRadioStations]);
-  const [newStationName, setNewStationName] = useState('');
-  const [newStationUrl, setNewStationUrl] = useState('');
-  const [isAddingStation, setIsAddingStation] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -99,57 +97,6 @@ const Resources = () => {
     toast({
       title: `Opening ${station.name}`,
       description: 'The radio player is opening in a new tab.',
-    });
-  };
-
-  const saveCustomStation = () => {
-    if (!newStationName.trim() || !newStationUrl.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please provide both a station name and URL',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Get current custom stations
-    const savedStations = localStorage.getItem(CUSTOM_STATIONS_KEY);
-    const customStations = savedStations ? JSON.parse(savedStations) : [];
-
-    // Check if we already have 2 custom stations
-    if (customStations.length >= 2) {
-      toast({
-        title: 'Maximum Stations Reached',
-        description:
-          'You can only add up to 2 custom radio stations. Please remove one to add another.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Create new station
-    const newStation = {
-      id: Date.now(), // Use timestamp as unique ID
-      name: newStationName,
-      description: 'Custom Radio Station',
-      url: newStationUrl,
-      streamUrl: newStationUrl, // Use the provided URL for both website and stream
-      isCustom: true,
-    };
-
-    // Add to list and save
-    customStations.push(newStation);
-    localStorage.setItem(CUSTOM_STATIONS_KEY, JSON.stringify(customStations));
-
-    // Update state
-    setRadioStations([...defaultRadioStations, ...customStations]);
-    setNewStationName('');
-    setNewStationUrl('');
-    setIsAddingStation(false);
-
-    toast({
-      title: 'Station Added',
-      description: `${newStationName} has been added to your stations.`,
     });
   };
 
@@ -174,8 +121,10 @@ const Resources = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
       <h1 className="text-2xl font-bold">Resources</h1>
+
+      <QuickLinks />
 
       <Card>
         <CardHeader className="pb-2">
@@ -183,53 +132,10 @@ const Resources = () => {
             <Radio className="h-5 w-5 text-clergy-primary" />
             Catholic Radio
           </CardTitle>
-          <CardDescription>Listen to Catholic radio stations</CardDescription>
+          <br />
+          <br />
         </CardHeader>
         <CardContent>
-          {isAddingStation ? (
-            <div className="mb-4 p-4 border rounded-lg">
-              <h3 className="font-bold mb-2">Add Custom Station</h3>
-              <div className="space-y-3">
-                <div>
-                  <Input
-                    placeholder="Station Name"
-                    value={newStationName}
-                    onChange={(e) => setNewStationName(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Input
-                    placeholder="Station URL (website or player URL)"
-                    value={newStationUrl}
-                    onChange={(e) => setNewStationUrl(e.target.value)}
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAddingStation(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={saveCustomStation}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Station
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mb-4">
-              {radioStations.length < defaultRadioStations.length + 2 && (
-                <Button
-                  variant="outline"
-                  className="w-full mb-4"
-                  onClick={() => setIsAddingStation(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Custom Radio Station ({radioStations.length - defaultRadioStations.length}/2)
-                </Button>
-              )}
-            </div>
-          )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {radioStations.map((station: any) => (
               <Card key={station.id} className="overflow-hidden">
@@ -285,7 +191,8 @@ const Resources = () => {
             <Book className="h-5 w-5 text-clergy-primary" />
             Ministry Resources
           </CardTitle>
-          <CardDescription>Helpful resources for your ministry</CardDescription>
+          <br />
+          <br />
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

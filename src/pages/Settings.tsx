@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 import GoogleAccountSettings from '@/components/settings/GoogleAccountSettings';
 import GeneralSettings from '@/components/settings/GeneralSettings';
-import RadioSettings from '@/components/settings/RadioSettings';
+import VoiceCommandsSettings from '@/components/settings/VoiceCommandsSettings';
 
 const Settings = () => {
   const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(true);
@@ -26,7 +26,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in max-w-2xl ml-8">
       <h1 className="text-2xl font-bold">Settings</h1>
 
       <GoogleAccountSettings
@@ -34,6 +34,11 @@ const Settings = () => {
         setCalendarSyncEnabled={setCalendarSyncEnabled}
         emailNotificationsEnabled={emailNotificationsEnabled}
         setEmailNotificationsEnabled={setEmailNotificationsEnabled}
+      />
+
+      <VoiceCommandsSettings
+        voiceCommandsEnabled={voiceCommandsEnabled}
+        setVoiceCommandsEnabled={setVoiceCommandsEnabled}
       />
 
       <GeneralSettings
